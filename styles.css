@@ -1,0 +1,171 @@
+/* Minimal CSS Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: sans-serif; /* Basic fallback */
+}
+
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}
+
+p, h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: break-word;
+}
+
+/* CSS Custom Properties */
+:root {
+  /* Japanese-inspired Colors */
+  --color-cherry-blossom: #FFB7C5; /* Sakura Pink */
+  --color-zen-green: #7FB069;     /* Matcha Green */
+  --color-sunset-orange: #FF8A65; /* Evening Sun Orange */
+  --color-ocean-blue: #4FC3F7;    /* Clear Sky Blue */
+  --color-misty-gray: #B0BEC5;    /* Morning Mist Gray */
+  --color-text: #333;
+  --color-background: #F8F8F8; /* Light, calming background */
+
+  /* Font Families */
+  --font-primary: 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif; /* Japanese-friendly fonts */
+  --font-secondary: 'Georgia', serif; /* For accents or specific text */
+  --font-system: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, helvetica, arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
+  /* Spacing Units (8px base grid) */
+  --spacing-unit: 8px;
+  --spacing-xs: var(--spacing-unit);        /* 8px */
+  --spacing-sm: calc(var(--spacing-unit) * 2); /* 16px */
+  --spacing-md: calc(var(--spacing-unit) * 3); /* 24px */
+  --spacing-lg: calc(var(--spacing-unit) * 4); /* 32px */
+  --spacing-xl: calc(var(--spacing-unit) * 6); /* 48px */
+  --spacing-xxl: calc(var(--spacing-unit) * 8);/* 64px */
+
+  /* Border Radius Values */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+}
+
+/* Body Styling */
+body {
+  min-height: 100vh;
+  font-family: var(--font-system); /* Using system fonts as a base */
+  background-color: var(--color-background);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main Content Area Centering */
+#app {
+  flex-grow: 1; /* Allows main to take up available space */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-md);
+  width: 100%;
+  max-width: 1200px; /* Max width for larger screens */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+header, footer {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-misty-gray); /* Example, can be changed */
+    text-align: center;
+}
+
+/* Responsive Design Breakpoints */
+
+/* Mobile: 320px - 767px (default styles often cover this) */
+
+/* Tablet: 768px - 1023px */
+@media (width >= 768px) {
+  :root {
+    --spacing-unit: 10px; /* Slightly increase base spacing for tablets */
+  }
+
+  #app {
+    padding: var(--spacing-lg);
+  }
+}
+
+/* Desktop: 1024px+ */
+@media (width >= 1024px) {
+  :root {
+    --spacing-unit: 12px; /* Further increase base spacing for desktops */
+  }
+
+   #app {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Control Panel Styling */
+.control-panel {
+  position: fixed; /* Or absolute if #app is the positioning context */
+  bottom: var(--spacing-lg); /* 32px from 8px base, or 40px from 10px base etc. */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgb(255 255 255 / 10%); /* Semi-transparent white */
+  backdrop-filter: blur(10px); /* Frosted glass effect */
+  backdrop-filter: blur(10px); /* For Safari */
+  border-radius: var(--radius-md); /* 8px */
+  padding: var(--spacing-sm); /* 16px */
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+}
+
+.play-pause-btn {
+  min-width: 50px;  /* Increased for better touch */
+  min-height: 50px; /* Increased for better touch */
+  border: 2px solid rgb(255 255 255 / 70%);
+  background: rgb(255 255 255 / 20%);
+  color: white;
+  font-size: 24px; /* Size of the icon */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 50%; /* Make it circular */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  outline-offset: 4px; /* For focus visibility */
+}
+
+.play-pause-btn:hover {
+  background: rgb(255 255 255 / 40%);
+  transform: scale(1.1);
+}
+
+.play-pause-btn:active {
+  background: rgb(255 255 255 / 60%);
+  transform: scale(1.05);
+}
+
+.play-pause-btn .icon-pause {
+  display: none; /* Initially hide pause icon */
+}
+
+/* State when playing */
+.play-pause-btn.playing .icon-play {
+  display: none;
+}
+
+.play-pause-btn.playing .icon-pause {
+  display: inline; /* Show pause icon */
+}
