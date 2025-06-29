@@ -5,7 +5,9 @@ class AudioManager {
     this.playlist = [
       { title: "Zen Garden", src: "assets/audio/zen-garden.mp3", duration: 180 },
       { title: "Bamboo Flute", src: "assets/audio/bamboo-flute.mp3", duration: 150 },
-      { title: "Temple Chants", src: "assets/audio/temple-chants.mp3", duration: 200 }
+      { title: "Temple Chants", src: "assets/audio/temple-chants.mp3", duration: 200 },
+      { title: "Sakuya3", src: "assets/audio/sakuya3.mp3", duration: 201 },
+      { title: "Ronin", src: "assets/audio/ronin.mp3", duration: 145 },
     ];
     this.isPlaying = false;
     this.playPauseButton = document.getElementById(playPauseButtonId); // Get button
