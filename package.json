@@ -4,7 +4,8 @@
   "description": "",
   "main": "audio.js",
   "scripts": {
-    "test": "echo \"Open test-runner.html in your browser to run tests.\""
+    "test": "echo \"Open test-runner.html in your browser to run tests.\"",
+    "build": "webpack"
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,8 @@
   "homepage": "https://github.com/rajeshceg3/ZenOfJapan#readme",
   "devDependencies": {
     "@eslint/js": "^9.29.0",
-    "globals": "^16.2.0"
+    "globals": "^16.2.0",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^4.10.0"
   }
 }
