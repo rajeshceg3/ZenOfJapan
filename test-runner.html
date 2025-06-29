@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Player Tests</title>
+    <!-- Optional: Add any necessary styles for the test page here -->
+</head>
+<body>
+    <h1>Audio Player Tests</h1>
+
+    <!-- Placeholder for UI elements if needed by tests -->
+    <div id="playPauseBtn">
+        <span class="icon-play"></span>
+        <span class="icon-pause"></span>
+    </div>
+    <input type="range" id="volumeSlider" min="0" max="1" step="0.01">
+
+    <!-- Test Helper -->
+    <script src="test-helper.js"></script>
+
+    <!-- Code to be tested -->
+    <script src="audio.js"></script>
+
+    <!-- Test file (will be created in the next step) -->
+    <script src="audio.test.js"></script>
+
+    <!-- Optional: Add a section to display test results -->
+    <div id="test-results"></div>
+
+    <script>
+        // Optional: Basic test result reporting
+        const resultsDiv = document.getElementById('test-results');
+        const originalLog = console.log;
+        const originalError = console.error;
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const p = document.createElement('p');
+            p.textContent = args.join(' ');
+            p.style.color = 'green';
+            resultsDiv.appendChild(p);
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            const p = document.createElement('p');
+            p.textContent = args.join(' ');
+            p.style.color = 'red';
+            resultsDiv.appendChild(p);
+        };
+    </script>
+</body>
+</html>

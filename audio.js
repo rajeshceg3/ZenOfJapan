@@ -144,3 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 });
+
+// Export the AudioManager class for Node.js environments (e.g., testing)
+// Check if module and module.exports are defined to maintain browser compatibility
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = AudioManager;
+}

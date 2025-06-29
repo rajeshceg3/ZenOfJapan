@@ -4,7 +4,7 @@
   "description": "",
   "main": "audio.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Open test-runner.html in your browser to run tests.\""
   },
   "repository": {
     "type": "git",
