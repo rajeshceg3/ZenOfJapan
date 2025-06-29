@@ -169,3 +169,10 @@ header, footer {
 .play-pause-btn.playing .icon-pause {
   display: inline; /* Show pause icon */
 }
+
+#volumeSlider {
+  margin-left: var(--spacing-sm); /* 16px based on 8px unit, adjust as needed */
+  width: 120px; /* Or any desired width */
+  accent-color: var(--color-zen-green); /* Using one of the theme colors */
+  cursor: pointer;
+}
