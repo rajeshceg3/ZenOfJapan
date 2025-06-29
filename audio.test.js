@@ -360,6 +360,41 @@ function resetAudioManagerForTest() {
     return audioManager;
 }
 
+// --- Add missing DOM elements needed for new tests ---
+// This is a simplified way to ensure these elements exist for tests.
+// In a Jest environment, you'd use `document.body.innerHTML` in a `beforeEach`.
+// Here, we modify the mock `getElementById` and ensure these are available.
+
+const originalGetElementById = document.getElementById;
+document.getElementById = (id) => {
+    // console.log(`document.getElementById called for: ${id}`);
+    if (id === 'playPauseBtn') {
+        return mockPlayPauseButton; // From existing setupMockDOM
+    }
+    if (id === 'volumeSlider') {
+        return mockVolumeSlider; // From existing setupMockDOM
+    }
+    if (id === 'trackInfo') {
+        if (!document.body.querySelector('#trackInfo')) {
+            const trackInfoDiv = document.createElement('div');
+            trackInfoDiv.id = 'trackInfo';
+            document.body.appendChild(trackInfoDiv);
+            // console.log('Created #trackInfo div');
+        }
+        return document.body.querySelector('#trackInfo');
+    }
+    if (id === 'prevBtn') {
+        if (!document.body.querySelector('#prevBtn')) {
+            const prevButton = document.createElement('button');
+            prevButton.id = 'prevBtn';
+            document.body.appendChild(prevButton);
+            // console.log('Created #prevBtn button');
+        }
+        return document.body.querySelector('#prevBtn');
+    }
+    return originalGetElementById.call(document, id);
+};
+
 
 // == Initialization Tests ==
 console.log('--- Initialization Tests ---');
@@ -711,3 +746,164 @@ console.log('AudioManager tests complete.');
 // assertTrue(1 === 1, "Example: 1 should be equal to 1");
 // assertFalse(1 === 0, "Example: 1 should not be equal to 0");
 // assertEquals("hello", "hello", "Example: Strings should be equal");
+
+
+// == prevTrack Method Tests ==
+console.log('--- prevTrack Method Tests ---');
+(function() {
+    let audioManager;
+    let playSpy;
+
+    // Setup before each test in this suite
+    const beforeEach = () => {
+        audioManager = resetAudioManagerForTest();
+        // Ensure DOM elements are there if resetAudioManagerForTest doesn't handle them all for prevBtn
+        if (!document.getElementById('prevBtn')) {
+             const prevButton = document.createElement('button');
+             prevButton.id = 'prevBtn';
+             document.body.appendChild(prevButton);
+        }
+        // Spy on the play method of the audio element instance
+        playSpy = {
+            called: false,
+            callCount: 0,
+            fn: audioManager.audioElement.play, // Original function
+            mock: function() { // Mock implementation
+                this.called = true;
+                this.callCount++;
+                // console.log('Mocked play called on audio element');
+                return this.fn.apply(audioManager.audioElement, arguments); // Call original
+            }.bind(this) // Bind this for 'this.called'
+        };
+        // Replace the original play method with the mock
+        audioManager.audioElement.play = playSpy.mock;
+    };
+
+    // Test case 1: Changes to the previous track
+    (function() {
+        beforeEach();
+        console.log("Test: prevTrack() changes to the previous track");
+        audioManager.currentTrackIndex = 1; // Start at the second track
+        audioManager.audioElement.src = audioManager.playlist[1].src; // Sync src
+        audioManager.prevTrack();
+        assertEquals(0, audioManager.currentTrackIndex, "prevTrack() should change currentTrackIndex to 0");
+        assertEquals(audioManager.playlist[0].src, audioManager.audioElement.src, "prevTrack() should change audioElement src to the first track");
+    })();
+
+    // Test case 2: Wraps around from the first to the last track
+    (function() {
+        beforeEach();
+        console.log("Test: prevTrack() wraps around to the last track");
+        audioManager.currentTrackIndex = 0; // Start at the first track
+        audioManager.audioElement.src = audioManager.playlist[0].src; // Sync src
+        audioManager.prevTrack();
+        const lastTrackIndex = audioManager.playlist.length - 1;
+        assertEquals(lastTrackIndex, audioManager.currentTrackIndex, "prevTrack() should wrap around to the last track index");
+        assertEquals(audioManager.playlist[lastTrackIndex].src, audioManager.audioElement.src, "prevTrack() should change audioElement src to the last track");
+    })();
+
+    // Test case 3: Continues playing if music was playing
+    (function() {
+        beforeEach();
+        console.log("Test: prevTrack() continues playing if music was playing");
+        audioManager.currentTrackIndex = 1;
+        audioManager.audioElement.src = audioManager.playlist[1].src;
+        audioManager.isPlaying = true; // Simulate music was playing
+        // audioManager.audioElement.play = jest.fn(); // Using jest.fn if in Jest env
+
+        audioManager.prevTrack();
+        assertTrue(playSpy.called, "prevTrack() should call play() on audioElement if isPlaying was true");
+        assertEquals(1, playSpy.callCount, "play() should be called once");
+        assertTrue(audioManager.isPlaying, "isPlaying should remain true"); // prevTrack calls play which sets isPlaying to true
+    })();
+
+    // Test case 4: Remains paused if music was paused
+    (function() {
+        beforeEach();
+        console.log("Test: prevTrack() remains paused if music was paused");
+        audioManager.currentTrackIndex = 1;
+        audioManager.audioElement.src = audioManager.playlist[1].src;
+        audioManager.isPlaying = false; // Simulate music was paused
+        // audioManager.audioElement.play = jest.fn();
+
+        audioManager.prevTrack();
+        assertFalse(playSpy.called, "prevTrack() should not call play() on audioElement if isPlaying was false");
+        assertFalse(audioManager.isPlaying, "isPlaying should remain false");
+        assertEquals(audioManager.playlist[0].src, audioManager.audioElement.src, "prevTrack() should still update the src even if paused");
+    })();
+
+    console.log('prevTrack method tests complete.');
+})();
+
+
+// == Track Information Display Tests ==
+console.log('--- Track Information Display Tests ---');
+(function() {
+    let audioManager;
+    let trackInfoDiv;
+
+    // Setup before each test in this suite
+    const beforeEach = () => {
+        // Ensure trackInfo div is in the document body for each test
+        // This is a bit manual for a non-Jest environment
+        let existingDiv = document.getElementById('trackInfo');
+        if (existingDiv) {
+            existingDiv.remove();
+        }
+        trackInfoDiv = document.createElement('div');
+        trackInfoDiv.id = 'trackInfo';
+        document.body.appendChild(trackInfoDiv);
+
+        audioManager = resetAudioManagerForTest(); // This will call new AudioManager(...)
+                                               // and its init() should call _updateTrackInfo
+        // Note: resetAudioManagerForTest calls init(), which calls _updateTrackInfo.
+        // So, trackInfoDiv should be populated after this line.
+    };
+
+    // Test case 1: Displays correct track title after init()
+    (function() {
+        beforeEach(); // This calls audioManager.init() via resetAudioManagerForTest()
+        console.log("Test: Track info displays correct title after init()");
+        const expectedTitle = audioManager.playlist[0].title;
+        assertEquals(expectedTitle, trackInfoDiv.textContent, "Track info should display the first track's title after init");
+    })();
+
+    // Test case 2: Updates track title after nextTrack()
+    (function() {
+        beforeEach();
+        console.log("Test: Track info updates after nextTrack()");
+        audioManager.nextTrack();
+        const expectedTitle = audioManager.playlist[1].title;
+        assertEquals(expectedTitle, trackInfoDiv.textContent, "Track info should update to the second track's title after nextTrack");
+    })();
+
+    // Test case 3: Updates track title after prevTrack()
+    (function() {
+        beforeEach();
+        console.log("Test: Track info updates after prevTrack()");
+        audioManager.nextTrack(); // Go to track 1 first
+        audioManager.prevTrack(); // Go back to track 0
+        const expectedTitle = audioManager.playlist[0].title;
+        assertEquals(expectedTitle, trackInfoDiv.textContent, "Track info should update to the first track's title after prevTrack");
+    })();
+
+    // Test case 4: Handles empty playlist gracefully (extra test)
+    (function() {
+        beforeEach();
+        console.log("Test: Track info displays default message for empty playlist");
+        audioManager.playlist = [];
+        audioManager.currentTrackIndex = 0; // Reset index
+        audioManager.init(); // Re-initialize with empty playlist
+        assertEquals("No track loaded", trackInfoDiv.textContent, "Track info should display 'No track loaded' for empty playlist after init");
+
+        // Also test nextTrack and prevTrack with empty playlist
+        audioManager.nextTrack();
+        assertEquals("No track loaded", trackInfoDiv.textContent, "Track info should remain 'No track loaded' after nextTrack on empty playlist");
+        audioManager.prevTrack();
+        assertEquals("No track loaded", trackInfoDiv.textContent, "Track info should remain 'No track loaded' after prevTrack on empty playlist");
+
+    })();
+
+
+    console.log('Track Information Display tests complete.');
+})();

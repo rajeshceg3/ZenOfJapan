@@ -13,6 +13,8 @@ class AudioManager {
 
     this._handleTrackEnd = this._handleTrackEnd.bind(this);
     this._updateButtonState = this._updateButtonState.bind(this);
+    this.prevTrack = this.prevTrack.bind(this); // Bind prevTrack
+    this._updateTrackInfo = this._updateTrackInfo.bind(this); // Bind _updateTrackInfo
   }
 
   init() {
@@ -45,6 +47,7 @@ class AudioManager {
 
     this._updateButtonState(); // Initial button state
     console.log("AudioManager initialized. Current track:", this.playlist[this.currentTrackIndex].title);
+    this._updateTrackInfo(); // Update track info on init
   }
 
   togglePlayPause() {
@@ -101,6 +104,22 @@ class AudioManager {
     }
     console.log("Next track:", this.playlist[this.currentTrackIndex].title);
     this._updateButtonState(); // Update button if needed (e.g. if it displays track info)
+    this._updateTrackInfo(); // Update track info on nextTrack
+  }
+
+  prevTrack() {
+    this.currentTrackIndex--;
+    if (this.currentTrackIndex < 0) {
+      this.currentTrackIndex = this.playlist.length - 1;
+    }
+    this.audioElement.src = this.playlist[this.currentTrackIndex].src;
+    this.audioElement.load();
+    if (this.isPlaying) {
+      this.play();
+    }
+    console.log("Previous track:", this.playlist[this.currentTrackIndex].title);
+    this._updateButtonState(); // Update button if needed
+    this._updateTrackInfo(); // Update track info on prevTrack
   }
 
   _handleTrackEnd() {
@@ -125,6 +144,15 @@ class AudioManager {
       if(iconPause) iconPause.style.display = 'none';
     }
   }
+
+  _updateTrackInfo() {
+    const trackInfoDiv = document.getElementById('trackInfo');
+    if (trackInfoDiv && this.playlist.length > 0 && this.playlist[this.currentTrackIndex]) {
+      trackInfoDiv.textContent = this.playlist[this.currentTrackIndex].title;
+    } else if (trackInfoDiv) {
+      trackInfoDiv.textContent = 'No track loaded'; // Default message
+    }
+  }
 }
 
 // Modify the instantiation at the end of the file:
@@ -132,6 +160,12 @@ class AudioManager {
 document.addEventListener('DOMContentLoaded', () => {
   const audioManager = new AudioManager('playPauseBtn', 'volumeSlider');
   audioManager.init();
+
+  // Add event listener for the previous button
+  const prevBtn = document.getElementById('prevBtn');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => audioManager.prevTrack());
+  }
 
   // Keyboard accessibility for play/pause button
   const playPauseBtn = document.getElementById('playPauseBtn');
