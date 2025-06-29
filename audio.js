@@ -1,5 +1,5 @@
 class AudioManager {
-  constructor(playPauseButtonId) { // Accept button ID
+  constructor(playPauseButtonId, volumeSliderId) { // Accept button ID and volume slider ID
     this.audioElement = new Audio();
     this.currentTrackIndex = 0;
     this.playlist = [
@@ -9,6 +9,7 @@ class AudioManager {
     ];
     this.isPlaying = false;
     this.playPauseButton = document.getElementById(playPauseButtonId); // Get button
+    this.volumeSlider = document.getElementById(volumeSliderId); // Get volume slider
 
     this._handleTrackEnd = this._handleTrackEnd.bind(this);
     this._updateButtonState = this._updateButtonState.bind(this);
@@ -36,6 +37,12 @@ class AudioManager {
     if (this.playPauseButton) {
         this.playPauseButton.addEventListener('click', () => this.togglePlayPause());
     }
+
+    if (this.volumeSlider) {
+      this.volumeSlider.value = this.audioElement.volume; // Set initial slider value
+      this.volumeSlider.addEventListener('input', () => this.setVolume(this.volumeSlider.value));
+    }
+
     this._updateButtonState(); // Initial button state
     console.log("AudioManager initialized. Current track:", this.playlist[this.currentTrackIndex].title);
   }
@@ -123,7 +130,7 @@ class AudioManager {
 // Modify the instantiation at the end of the file:
 // DOMContentLoaded ensures the button exists before audioManager tries to access it.
 document.addEventListener('DOMContentLoaded', () => {
-  const audioManager = new AudioManager('playPauseBtn');
+  const audioManager = new AudioManager('playPauseBtn', 'volumeSlider');
   audioManager.init();
 
   // Keyboard accessibility for play/pause button
