@@ -1,4 +1,6 @@
 /* Minimal CSS Reset */
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz@6..96&display=swap');
+
 *,
 *::before,
 *::after {
@@ -39,8 +41,8 @@ p, h1, h2, h3, h4, h5, h6 {
   --color-background: #F8F8F8; /* Light, calming background */
 
   /* Font Families */
-  --font-primary: 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif; /* Japanese-friendly fonts */
-  --font-secondary: 'Georgia', serif; /* For accents or specific text */
+  --font-primary: 'Bodoni Moda', serif;
+  --font-secondary: 'Noto Sans JP', sans-serif;
   --font-system: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, helvetica, arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 
   /* Spacing Units (8px base grid) */
@@ -61,11 +63,12 @@ p, h1, h2, h3, h4, h5, h6 {
 /* Body Styling */
 body {
   min-height: 100vh;
-  font-family: var(--font-system); /* Using system fonts as a base */
-  background-color: var(--color-background);
+  font-family: var(--font-primary);
+  background: radial-gradient(circle, var(--color-zen-green), var(--color-ocean-blue));
   color: var(--color-text);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* Main Content Area Centering */
@@ -82,10 +85,27 @@ body {
   margin-right: auto;
 }
 
-header, footer {
+header {
     padding: var(--spacing-sm) var(--spacing-md);
-    background-color: var(--color-misty-gray); /* Example, can be changed */
+    background-color: transparent;
     text-align: center;
+    text-shadow: 1px 1px 2px rgb(0 0 0 / 20%);
+}
+
+h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    color: white;
+    animation: fadeIn 2s ease-in-out;
+}
+
+footer {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: transparent;
+    text-align: center;
+    text-shadow: 1px 1px 2px rgb(0 0 0 / 20%);
+    font-family: var(--font-secondary);
 }
 
 /* Responsive Design Breakpoints */
@@ -122,13 +142,14 @@ header, footer {
   transform: translateX(-50%);
   background: rgb(255 255 255 / 10%); /* Semi-transparent white */
   backdrop-filter: blur(10px); /* Frosted glass effect */
-  backdrop-filter: blur(10px); /* For Safari */
+  -webkit-backdrop-filter: blur(10px); /* For Safari */
   border-radius: var(--radius-md); /* 8px */
   padding: var(--spacing-sm); /* 16px */
   box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
   display: flex;
   align-items: center;
   z-index: 1000;
+  animation: slideUp 1s ease-in-out;
 }
 
 .play-pause-btn {
@@ -175,4 +196,35 @@ header, footer {
   width: 120px; /* Or any desired width */
   accent-color: var(--color-zen-green); /* Using one of the theme colors */
   cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translate(-50%, 100%); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #4fc3f7;
+    background-image: linear-gradient(45deg, #ffb7c5 25%, transparent 25%),
+                      linear-gradient(-45deg, #ffb7c5 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, #ffb7c5 75%),
+                      linear-gradient(-45deg, transparent 75%, #ffb7c5 75%);
+    background-size: 60px 60px;
+    opacity: 0.1;
+    animation: movePattern 20s linear infinite;
+}
+
+@keyframes movePattern {
+    from { background-position: 0 0; }
+    to { background-position: 120px 60px; }
 }
