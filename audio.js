@@ -98,6 +98,10 @@ class AudioManager {
   }
 
   nextTrack() {
+    if (this.playlist.length === 0) {
+      console.warn("Cannot navigate to next track: playlist is empty.");
+      return;
+    }
     this.currentTrackIndex = (this.currentTrackIndex + 1) % this.playlist.length;
     this.audioElement.src = this.playlist[this.currentTrackIndex].src;
     this.audioElement.load(); // Important to load the new source
@@ -110,6 +114,10 @@ class AudioManager {
   }
 
   prevTrack() {
+    if (this.playlist.length === 0) {
+      console.warn("Cannot navigate to previous track: playlist is empty.");
+      return;
+    }
     this.currentTrackIndex--;
     if (this.currentTrackIndex < 0) {
       this.currentTrackIndex = this.playlist.length - 1;
