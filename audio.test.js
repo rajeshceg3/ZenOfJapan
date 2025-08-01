@@ -887,7 +887,7 @@ console.log('--- Track Information Display Tests ---');
         assertEquals(expectedTitle, trackInfoDiv.textContent, "Track info should update to the first track's title after prevTrack");
     })();
 
-    // Test case 4: Handles empty playlist gracefully (extra test)
+    // Test case 4: Handles empty playlist gracefully
     (function() {
         beforeEach();
         console.log("Test: Track info displays default message for empty playlist");
@@ -896,11 +896,17 @@ console.log('--- Track Information Display Tests ---');
         audioManager.init(); // Re-initialize with empty playlist
         assertEquals("No track loaded", trackInfoDiv.textContent, "Track info should display 'No track loaded' for empty playlist after init");
 
-        // Also test nextTrack and prevTrack with empty playlist
-        audioManager.nextTrack();
-        assertEquals("No track loaded", trackInfoDiv.textContent, "Track info should remain 'No track loaded' after nextTrack on empty playlist");
-        audioManager.prevTrack();
-        assertEquals("No track loaded", trackInfoDiv.textContent, "Track info should remain 'No track loaded' after prevTrack on empty playlist");
+        // Verify that nextTrack() and prevTrack() do not throw errors with an empty playlist
+        try {
+            audioManager.nextTrack(); // Should not throw
+            audioManager.prevTrack(); // Should not throw
+            assertTrue(true, "nextTrack() and prevTrack() should not throw an error on an empty playlist.");
+        } catch (e) {
+            assertTrue(false, `nextTrack() or prevTrack() threw an unexpected error on an empty playlist: ${e.message}`);
+        }
+
+        // Also test that the UI text remains unchanged
+        assertEquals("No track loaded", trackInfoDiv.textContent, "Track info should remain 'No track loaded' after calls on empty playlist");
 
     })();
 
