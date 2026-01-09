@@ -1,230 +1,393 @@
-/* Minimal CSS Reset */
-@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz@6..96&display=swap');
+:root {
+  /* --- Color Palette --- */
+  /* Refined, accessible, "Zen" colors */
+  --color-bg-light: #FDFCF8; /* Creamy off-white */
+  --color-bg-dark: #121212;  /* Deep dark for dark mode potential, or contrast */
 
-*,
-*::before,
-*::after {
+  --color-primary: #37474F;  /* Deep Charcoal - Text & Main Elements */
+  --color-secondary: #546E7A; /* Muted Blue-Grey - Secondary Text */
+
+  --color-accent-teal: #26A69A; /* Calming Teal */
+  --color-accent-coral: #FF8A65; /* Warm Coral */
+  --color-accent-soft-pink: #F8BBD0; /* Sakura Pink - Subtle */
+
+  --color-glass-border: rgba(255, 255, 255, 0.6);
+  --color-glass-bg: rgba(255, 255, 255, 0.7);
+  --color-glass-shadow: rgba(0, 0, 0, 0.05);
+
+  /* --- Typography --- */
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'Inter', sans-serif;
+
+  /* --- Spacing & Layout --- */
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 32px;
+  --space-xl: 64px;
+
+  --border-radius-sm: 8px;
+  --border-radius-md: 16px;
+  --border-radius-pill: 999px;
+  --border-radius-circle: 50%;
+
+  /* --- Shadows (Stripe-inspired) --- */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html {
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-family: sans-serif; /* Basic fallback */
-}
-
-img, picture, video, canvas, svg {
-  display: block;
-  max-width: 100%;
-}
-
-input, button, textarea, select {
-  font: inherit;
-}
-
-p, h1, h2, h3, h4, h5, h6 {
-  overflow-wrap: break-word;
-}
-
-/* CSS Custom Properties */
-:root {
-  /* Japanese-inspired Colors */
-  --color-cherry-blossom: #FFB7C5; /* Sakura Pink */
-  --color-zen-green: #7FB069;     /* Matcha Green */
-  --color-sunset-orange: #FF8A65; /* Evening Sun Orange */
-  --color-ocean-blue: #4FC3F7;    /* Clear Sky Blue */
-  --color-misty-gray: #B0BEC5;    /* Morning Mist Gray */
-  --color-text: #333;
-  --color-background: #F8F8F8; /* Light, calming background */
-
-  /* Font Families */
-  --font-primary: 'Bodoni Moda', serif;
-  --font-secondary: 'Noto Sans JP', sans-serif;
-  --font-system: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, helvetica, arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-
-  /* Spacing Units (8px base grid) */
-  --spacing-unit: 8px;
-  --spacing-xs: var(--spacing-unit);        /* 8px */
-  --spacing-sm: calc(var(--spacing-unit) * 2); /* 16px */
-  --spacing-md: calc(var(--spacing-unit) * 3); /* 24px */
-  --spacing-lg: calc(var(--spacing-unit) * 4); /* 32px */
-  --spacing-xl: calc(var(--spacing-unit) * 6); /* 48px */
-  --spacing-xxl: calc(var(--spacing-unit) * 8);/* 64px */
-
-  /* Border Radius Values */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
-}
-
-/* Body Styling */
 body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-light);
+  color: var(--color-primary);
+  line-height: 1.6;
   min-height: 100vh;
-  font-family: var(--font-primary);
-  background: radial-gradient(circle, var(--color-zen-green), var(--color-ocean-blue));
-  color: var(--color-text);
+  overflow: hidden; /* Prevent scroll on desktop if possible */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
-/* Main Content Area Centering */
-#app {
-  flex-grow: 1; /* Allows main to take up available space */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: var(--spacing-md);
+/* --- Background Ambient Effects --- */
+.background-ambient {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 1200px; /* Max width for larger screens */
-  margin-left: auto;
-  margin-right: auto;
+  height: 100%;
+  z-index: -2;
+  background: radial-gradient(circle at 10% 20%, rgba(248, 187, 208, 0.3) 0%, transparent 40%),
+              radial-gradient(circle at 90% 80%, rgba(38, 166, 154, 0.15) 0%, transparent 40%);
+  filter: blur(60px);
+  animation: breathe 20s infinite alternate ease-in-out;
 }
 
-header {
-    padding: var(--spacing-sm) var(--spacing-md);
-    background-color: transparent;
-    text-align: center;
-    text-shadow: 1px 1px 2px rgb(0 0 0 / 20%);
+.pattern-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
-h1 {
-    font-size: 3rem;
-    font-weight: bold;
-    letter-spacing: 0.1em;
-    color: white;
-    animation: fadeIn 2s ease-in-out;
+@keyframes breathe {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.1); }
 }
 
-footer {
-    padding: var(--spacing-sm) var(--spacing-md);
-    background-color: transparent;
-    text-align: center;
-    text-shadow: 1px 1px 2px rgb(0 0 0 / 20%);
-    font-family: var(--font-secondary);
-}
-
-/* Responsive Design Breakpoints */
-
-/* Mobile: 320px - 767px (default styles often cover this) */
-
-/* Tablet: 768px - 1023px */
-@media (width >= 768px) {
-  :root {
-    --spacing-unit: 10px; /* Slightly increase base spacing for tablets */
-  }
-
-  #app {
-    padding: var(--spacing-lg);
-  }
-}
-
-/* Desktop: 1024px+ */
-@media (width >= 1024px) {
-  :root {
-    --spacing-unit: 12px; /* Further increase base spacing for desktops */
-  }
-
-   #app {
-    padding: var(--spacing-xl);
-  }
-}
-
-/* Control Panel Styling */
-.control-panel {
-  position: fixed; /* Or absolute if #app is the positioning context */
-  bottom: var(--spacing-lg); /* 32px from 8px base, or 40px from 10px base etc. */
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgb(255 255 255 / 10%); /* Semi-transparent white */
-  backdrop-filter: blur(10px); /* Frosted glass effect */
-  -webkit-backdrop-filter: blur(10px); /* For Safari */
-  border-radius: var(--radius-md); /* 8px */
-  padding: var(--spacing-sm); /* 16px */
-  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+/* --- Layout --- */
+#app {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  z-index: 1000;
-  animation: slideUp 1s ease-in-out;
-}
-
-.play-pause-btn {
-  min-width: 50px;  /* Increased for better touch */
-  min-height: 50px; /* Increased for better touch */
-  border: 2px solid rgb(255 255 255 / 70%);
-  background: rgb(255 255 255 / 20%);
-  color: white;
-  font-size: 24px; /* Size of the icon */
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-radius: 50%; /* Make it circular */
-  display: flex;
   justify-content: center;
+  padding: var(--space-md);
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+  animation: fadeInDown 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-header h1 {
+  font-family: var(--font-serif);
+  font-size: 3.5rem; /* Large, elegant */
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-xs);
+  color: var(--color-primary);
+}
+
+.app-header .subtitle {
+  font-size: 1.1rem;
+  color: var(--color-secondary);
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* --- Player Card --- */
+.player-card {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  outline-offset: 4px; /* For focus visibility */
+  justify-content: center;
+  text-align: center;
+  margin-bottom: var(--space-xl);
+  animation: fadeInUp 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards;
 }
 
-.play-pause-btn:hover {
-  background: rgb(255 255 255 / 40%);
-  transform: scale(1.1);
+.track-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.play-pause-btn:active {
-  background: rgb(255 255 255 / 60%);
+.track-icon {
+  width: 120px;
+  height: 120px;
+  background: white;
+  border-radius: var(--border-radius-circle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent-teal);
+  box-shadow: var(--shadow-floating);
+  margin-bottom: var(--space-lg);
+  position: relative;
+}
+
+.track-icon::after {
+    content: '';
+    position: absolute;
+    top: -4px; right: -4px; bottom: -4px; left: -4px;
+    border-radius: 50%;
+    border: 1px solid rgba(38, 166, 154, 0.2);
+    animation: pulseBorder 3s infinite;
+}
+
+@keyframes pulseBorder {
+    0% { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(1.1); opacity: 0; }
+}
+
+
+.track-title {
+  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  margin-bottom: var(--space-xs);
+  transition: opacity 0.3s ease;
+}
+
+.track-status {
+  font-size: 0.875rem;
+  color: var(--color-accent-teal);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* --- Control Panel (Glassmorphism) --- */
+.control-panel {
+  display: flex;
+  flex-direction: column; /* Stacked on mobile by default, row on desktop */
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+
+  background: var(--color-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-glass-border);
+  box-shadow: var(--shadow-floating);
+  border-radius: var(--border-radius-md); /* Pill shape on desktop */
+
+  position: relative; /* Floating naturally in the flex layout */
+  z-index: 100;
+
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeInUp 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.4s backwards;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.control-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-primary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-circle);
+}
+
+.secondary-btn {
+  width: 48px;
+  height: 48px;
+  opacity: 0.6;
+}
+
+.secondary-btn:hover {
+  opacity: 1;
+  background: rgba(0,0,0,0.03);
   transform: scale(1.05);
 }
 
-.play-pause-btn .icon-pause {
-  display: none; /* Initially hide pause icon */
+.primary-btn {
+  width: 72px;
+  height: 72px;
+  background: var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-md);
 }
 
-/* State when playing */
-.play-pause-btn.playing .icon-play {
-  display: none;
+.primary-btn:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-lg);
+  background: #263238; /* Slightly darker */
 }
 
-.play-pause-btn.playing .icon-pause {
-  display: inline; /* Show pause icon */
+.primary-btn:active {
+  transform: scale(0.95);
 }
 
-#volumeSlider {
-  margin-left: var(--spacing-sm); /* 16px based on 8px unit, adjust as needed */
-  width: 120px; /* Or any desired width */
-  accent-color: var(--color-zen-green); /* Using one of the theme colors */
+.volume-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.volume-container:hover {
+  opacity: 1;
+}
+
+/* Custom Range Input Styling */
+input[type=range] {
+  -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+  width: 100px; /* Specific width. */
+  background: transparent; /* Otherwise white in Chrome */
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: var(--color-primary);
   cursor: pointer;
+  margin-top: -6px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.1s;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
 }
 
-@keyframes slideUp {
-  from { transform: translate(-50%, 100%); opacity: 0; }
-  to { transform: translate(-50%, 0); opacity: 1; }
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  background: rgba(0,0,0,0.1);
+  border-radius: 2px;
 }
 
-.pattern {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: #4fc3f7;
-    background-image: linear-gradient(45deg, #ffb7c5 25%, transparent 25%),
-                      linear-gradient(-45deg, #ffb7c5 25%, transparent 25%),
-                      linear-gradient(45deg, transparent 75%, #ffb7c5 75%),
-                      linear-gradient(-45deg, transparent 75%, #ffb7c5 75%);
-    background-size: 60px 60px;
-    opacity: 0.1;
-    animation: movePattern 20s linear infinite;
+input[type=range]:focus {
+  outline: none;
 }
 
-@keyframes movePattern {
-    from { background-position: 0 0; }
-    to { background-position: 120px 60px; }
+/* --- Footer --- */
+footer {
+  text-align: center;
+  padding: var(--space-md);
+  font-size: 0.75rem;
+  color: var(--color-secondary);
+  opacity: 0.5;
+}
+
+/* --- Animations --- */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Mobile / Responsive Overrides --- */
+@media (max-width: 768px) {
+    .app-header h1 {
+        font-size: 2.5rem;
+    }
+
+    .track-title {
+        font-size: 1.75rem;
+    }
+
+    .track-icon {
+        width: 100px;
+        height: 100px;
+    }
+
+    .control-panel {
+        width: 90%;
+        max-width: 400px;
+        flex-direction: column; /* Stack volume below controls */
+        padding: var(--space-md);
+        border-radius: var(--border-radius-md);
+
+        /* Float at bottom */
+        position: fixed;
+        bottom: var(--space-lg);
+    }
+
+    .controls-row {
+        gap: var(--space-md);
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .volume-container {
+        width: 100%;
+        justify-content: center;
+        margin-top: var(--space-xs);
+    }
+
+    input[type=range] {
+        width: 70%;
+    }
+
+    /* Ensure tap targets are large enough */
+    .secondary-btn {
+        width: 56px;
+        height: 56px;
+    }
+
+    #app {
+        justify-content: flex-start;
+        padding-top: var(--space-xl);
+    }
+}
+
+@media (min-width: 769px) {
+    .control-panel {
+        flex-direction: row; /* Horizontal on desktop */
+        border-radius: var(--border-radius-pill);
+        padding: var(--space-sm) var(--space-xl);
+    }
+
+    .volume-container {
+        margin-left: var(--space-lg);
+        padding-left: var(--space-lg);
+        border-left: 1px solid rgba(0,0,0,0.1);
+    }
 }

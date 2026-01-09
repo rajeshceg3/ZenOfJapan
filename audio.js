@@ -177,6 +177,12 @@ document.addEventListener('DOMContentLoaded', () => {
     prevBtn.addEventListener('click', () => audioManager.prevTrack());
   }
 
+  // Add event listener for the next button
+  const nextBtn = document.getElementById('nextBtn');
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => audioManager.nextTrack());
+  }
+
   // Keyboard accessibility for play/pause button
   const playPauseBtn = document.getElementById('playPauseBtn');
   if(playPauseBtn) {
