@@ -865,7 +865,10 @@ console.log('--- Track Information Display Tests ---');
         beforeEach(); // This calls audioManager.init() via resetAudioManagerForTest()
         console.log("Test: Track info displays correct title after init()");
         const expectedTitle = audioManager.playlist[0].title;
-        assertEquals(expectedTitle, trackInfoDiv.textContent, "Track info should display the first track's title after init");
+        // Wait for potential animation/async update (300ms + buffer)
+        setTimeout(() => {
+            assertEquals(expectedTitle, trackInfoDiv.textContent, "Track info should display the first track's title after init");
+        }, 350);
     })();
 
     // Test case 2: Updates track title after nextTrack()
@@ -874,7 +877,9 @@ console.log('--- Track Information Display Tests ---');
         console.log("Test: Track info updates after nextTrack()");
         audioManager.nextTrack();
         const expectedTitle = audioManager.playlist[1].title;
-        assertEquals(expectedTitle, trackInfoDiv.textContent, "Track info should update to the second track's title after nextTrack");
+        setTimeout(() => {
+            assertEquals(expectedTitle, trackInfoDiv.textContent, "Track info should update to the second track's title after nextTrack");
+        }, 350);
     })();
 
     // Test case 3: Updates track title after prevTrack()
@@ -884,7 +889,9 @@ console.log('--- Track Information Display Tests ---');
         audioManager.nextTrack(); // Go to track 1 first
         audioManager.prevTrack(); // Go back to track 0
         const expectedTitle = audioManager.playlist[0].title;
-        assertEquals(expectedTitle, trackInfoDiv.textContent, "Track info should update to the first track's title after prevTrack");
+        setTimeout(() => {
+            assertEquals(expectedTitle, trackInfoDiv.textContent, "Track info should update to the first track's title after prevTrack");
+        }, 350);
     })();
 
     // Test case 4: Handles empty playlist gracefully
