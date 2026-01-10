@@ -157,10 +157,20 @@ class AudioManager {
 
   _updateTrackInfo() {
     const trackInfoDiv = document.getElementById('trackInfo');
-    if (trackInfoDiv && this.playlist.length > 0 && this.playlist[this.currentTrackIndex]) {
-      trackInfoDiv.textContent = this.playlist[this.currentTrackIndex].title;
-    } else if (trackInfoDiv) {
-      trackInfoDiv.textContent = 'No track loaded'; // Default message
+    if (trackInfoDiv) {
+      // Add fade-out class to trigger animation
+      trackInfoDiv.classList.add('fade-out');
+
+      // Wait for the transition to finish (e.g., 300ms matches CSS) before updating text
+      setTimeout(() => {
+        if (this.playlist.length > 0 && this.playlist[this.currentTrackIndex]) {
+          trackInfoDiv.textContent = this.playlist[this.currentTrackIndex].title;
+        } else {
+          trackInfoDiv.textContent = 'No track loaded';
+        }
+        // Remove class to fade back in
+        trackInfoDiv.classList.remove('fade-out');
+      }, 300);
     }
   }
 }
