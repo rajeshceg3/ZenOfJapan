@@ -7,7 +7,7 @@
     <meta name="description" content="Immerse yourself in tranquility with our Japanese-inspired relaxation experience.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -23,7 +23,7 @@
         <section class="player-card">
             <div class="track-display">
                 <div class="track-icon">
-                    <!-- Abstract Zen Icon / Music Note -->
+                    <!-- Refined Abstract Zen Icon -->
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M9 18V5L21 3V16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                         <circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -36,38 +36,41 @@
         </section>
 
         <div class="control-panel">
+            <!-- Mobile Grab Handle -->
+            <div class="sheet-handle"></div>
+
             <div class="controls-row">
                 <button id="prevBtn" class="control-btn secondary-btn" aria-label="Previous Track">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M19 20L9 12L19 4V20Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M5 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M19 20L9 12L19 4V20Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                        <path d="M5 19V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
                 </button>
 
                 <button id="playPauseBtn" class="control-btn primary-btn" aria-label="Play Music">
                     <span class="icon-play">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 3L19 12L5 21V3Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M5 3L19 12L5 21V3Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
                         </svg>
                     </span>
                     <span class="icon-pause" style="display:none;">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M10 4H6V20H10V4Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                            <path d="M18 4H14V20H18V4Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M10 4H6V20H10V4Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                            <path d="M18 4H14V20H18V4Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
                         </svg>
                     </span>
                 </button>
 
                 <button id="nextBtn" class="control-btn secondary-btn" aria-label="Next Track">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M5 4L15 12L5 20V4Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M19 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M5 4L15 12L5 20V4Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                        <path d="M19 5V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
                 </button>
             </div>
 
             <div class="volume-container">
-                <svg class="volume-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="volume-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                     <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                 </svg>
