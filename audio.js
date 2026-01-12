@@ -6,16 +6,16 @@ class AudioManager {
       { title: "Zen Garden", src: "assets/audio/zen-garden.mp3", duration: 180 },
       { title: "Bamboo Flute", src: "assets/audio/bamboo-flute.mp3", duration: 150 },
       { title: "Temple Chants", src: "assets/audio/temple-chants.mp3", duration: 200 },
-      { title: "Sakuya3", src: "assets/audio/sakuya3.mp3", duration: 201 },
-      { title: "Ronin", src: "assets/audio/ronin.mp3", duration: 145 },
     ];
     this.isPlaying = false;
     this.playPauseButton = document.getElementById(playPauseButtonId); // Get button
     this.volumeSlider = document.getElementById(volumeSliderId); // Get volume slider
+    this.trackIcon = document.querySelector('.track-icon'); // Get track icon
 
     this._handleTrackEnd = this._handleTrackEnd.bind(this);
     this._updateButtonState = this._updateButtonState.bind(this);
     this.prevTrack = this.prevTrack.bind(this); // Bind prevTrack
+    this.nextTrack = this.nextTrack.bind(this); // Bind nextTrack
     this._updateTrackInfo = this._updateTrackInfo.bind(this); // Bind _updateTrackInfo
   }
 
@@ -147,11 +147,13 @@ class AudioManager {
       this.playPauseButton.setAttribute('aria-label', 'Pause Music');
       if(iconPlay) iconPlay.style.display = 'none';
       if(iconPause) iconPause.style.display = 'inline';
+      if(this.trackIcon) this.trackIcon.classList.add('playing');
     } else {
       this.playPauseButton.classList.remove('playing');
       this.playPauseButton.setAttribute('aria-label', 'Play Music');
       if(iconPlay) iconPlay.style.display = 'inline';
       if(iconPause) iconPause.style.display = 'none';
+      if(this.trackIcon) this.trackIcon.classList.remove('playing');
     }
   }
 
@@ -193,16 +195,20 @@ document.addEventListener('DOMContentLoaded', () => {
     nextBtn.addEventListener('click', () => audioManager.nextTrack());
   }
 
-  // Keyboard accessibility for play/pause button
-  const playPauseBtn = document.getElementById('playPauseBtn');
-  if(playPauseBtn) {
-      playPauseBtn.addEventListener('keydown', (event) => {
-          if (event.code === 'Space' || event.code === 'Enter') {
-              event.preventDefault(); // Prevent scrolling if space is pressed
-              audioManager.togglePlayPause();
-          }
-      });
-  }
+  // Keyboard accessibility
+  document.addEventListener('keydown', (event) => {
+    // Only handle global keys if not focused on an input (though we have none except volume)
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
+
+    if (event.code === 'Space') {
+      event.preventDefault(); // Prevent scrolling
+      audioManager.togglePlayPause();
+    } else if (event.code === 'ArrowRight') {
+      audioManager.nextTrack();
+    } else if (event.code === 'ArrowLeft') {
+      audioManager.prevTrack();
+    }
+  });
 });
 
 // Export the AudioManager class for Node.js environments (e.g., testing)
