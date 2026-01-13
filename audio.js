@@ -1,5 +1,5 @@
 class AudioManager {
-  constructor(playPauseButtonId, volumeSliderId) { // Accept button ID and volume slider ID
+  constructor(playPauseButtonId, volumeSliderId) {
     this.audioElement = new Audio();
     this.currentTrackIndex = 0;
     this.playlist = [
@@ -8,15 +8,30 @@ class AudioManager {
       { title: "Temple Chants", src: "assets/audio/temple-chants.mp3", duration: 200 },
     ];
     this.isPlaying = false;
-    this.playPauseButton = document.getElementById(playPauseButtonId); // Get button
-    this.volumeSlider = document.getElementById(volumeSliderId); // Get volume slider
-    this.trackIcon = document.querySelector('.track-icon'); // Get track icon
+    this.isMuted = false;
+    this.previousVolume = 0.5;
+
+    this.playPauseButton = document.getElementById(playPauseButtonId);
+    this.volumeSlider = document.getElementById(volumeSliderId);
+    this.trackIcon = document.querySelector('.track-icon');
+
+    // Progress elements
+    this.progressContainer = document.getElementById('progressContainer');
+    this.progressFill = document.getElementById('progressFill');
+    this.currentTimeEl = document.getElementById('currentTime');
+    this.durationEl = document.getElementById('duration');
+
+    // Mute button
+    this.muteButton = document.querySelector('.volume-btn');
 
     this._handleTrackEnd = this._handleTrackEnd.bind(this);
     this._updateButtonState = this._updateButtonState.bind(this);
-    this.prevTrack = this.prevTrack.bind(this); // Bind prevTrack
-    this.nextTrack = this.nextTrack.bind(this); // Bind nextTrack
-    this._updateTrackInfo = this._updateTrackInfo.bind(this); // Bind _updateTrackInfo
+    this._updateProgress = this._updateProgress.bind(this);
+    this._setProgress = this._setProgress.bind(this);
+    this.prevTrack = this.prevTrack.bind(this);
+    this.nextTrack = this.nextTrack.bind(this);
+    this._updateTrackInfo = this._updateTrackInfo.bind(this);
+    this.toggleMute = this.toggleMute.bind(this);
   }
 
   init() {
@@ -27,29 +42,41 @@ class AudioManager {
     this.audioElement.src = this.playlist[this.currentTrackIndex].src;
     this.audioElement.volume = 0.5;
 
+    // Events
     this.audioElement.addEventListener('ended', this._handleTrackEnd);
     this.audioElement.addEventListener('error', (e) => {
       console.error("Error with audio element:", e);
-      this._updateButtonState(); // Reflect error in button state
+      this._updateButtonState();
     });
     this.audioElement.addEventListener('loadedmetadata', () => {
-      // console.log("Track metadata loaded:", this.playlist[this.currentTrackIndex].title);
+        if(this.durationEl) {
+            this.durationEl.textContent = this._formatTime(this.audioElement.duration || 0);
+        }
     });
     this.audioElement.addEventListener('play', this._updateButtonState);
     this.audioElement.addEventListener('pause', this._updateButtonState);
+    this.audioElement.addEventListener('timeupdate', this._updateProgress);
 
     if (this.playPauseButton) {
         this.playPauseButton.addEventListener('click', () => this.togglePlayPause());
     }
 
     if (this.volumeSlider) {
-      this.volumeSlider.value = this.audioElement.volume; // Set initial slider value
+      this.volumeSlider.value = this.audioElement.volume;
       this.volumeSlider.addEventListener('input', () => this.setVolume(this.volumeSlider.value));
     }
 
-    this._updateButtonState(); // Initial button state
-    console.log("AudioManager initialized. Current track:", this.playlist[this.currentTrackIndex].title);
-    this._updateTrackInfo(); // Update track info on init
+    if (this.progressContainer) {
+        this.progressContainer.addEventListener('click', this._setProgress);
+    }
+
+    if (this.muteButton) {
+        this.muteButton.addEventListener('click', this.toggleMute);
+    }
+
+    this._updateButtonState();
+    this._updateTrackInfo();
+    console.log("AudioManager initialized.");
   }
 
   togglePlayPause() {
@@ -62,7 +89,6 @@ class AudioManager {
 
   play() {
     if (!this.audioElement.src || this.audioElement.currentSrc === "") {
-        // If src is not set, or if it's an empty string (can happen on initial load or after error)
         this.audioElement.src = this.playlist[this.currentTrackIndex].src;
     }
 
@@ -70,13 +96,11 @@ class AudioManager {
     if (playPromise !== undefined) {
       playPromise.then(() => {
         this.isPlaying = true;
-        // console.log("Playing:", this.playlist[this.currentTrackIndex].title);
-        // this._updateButtonState(); // Handled by 'play' event
       })
       .catch(error => {
         console.error("Error playing audio:", error);
         this.isPlaying = false;
-        this._updateButtonState(); // Ensure button reflects that playback failed
+        this._updateButtonState();
       });
     }
   }
@@ -84,57 +108,112 @@ class AudioManager {
   pause() {
     this.audioElement.pause();
     this.isPlaying = false;
-    // console.log("Paused:", this.playlist[this.currentTrackIndex].title);
-    // this._updateButtonState(); // Handled by 'pause' event
   }
 
   setVolume(level) {
     if (level >= 0 && level <= 1) {
       this.audioElement.volume = level;
-      console.log("Volume set to:", level);
-    } else {
-      console.warn("Volume level must be between 0 and 1.");
+      if (level > 0 && this.isMuted) {
+          this.isMuted = false; // Unmute if slider is moved
+          this._updateMuteUI();
+      } else if (level == 0 && !this.isMuted) {
+          this.isMuted = true;
+          this._updateMuteUI();
+      }
     }
+  }
+
+  toggleMute() {
+    if (this.isMuted) {
+        // Unmute
+        this.audioElement.volume = this.previousVolume || 0.5;
+        this.isMuted = false;
+        if (this.volumeSlider) this.volumeSlider.value = this.audioElement.volume;
+    } else {
+        // Mute
+        this.previousVolume = this.audioElement.volume;
+        this.audioElement.volume = 0;
+        this.isMuted = true;
+        if (this.volumeSlider) this.volumeSlider.value = 0;
+    }
+    this._updateMuteUI();
+  }
+
+  _updateMuteUI() {
+      if (!this.muteButton) return;
+      if (this.isMuted) {
+          this.muteButton.setAttribute('aria-label', 'Unmute');
+          this.muteButton.style.opacity = '0.5';
+          // Ideally swap icon to muted, but opacity works for now as quick feedback
+      } else {
+          this.muteButton.setAttribute('aria-label', 'Mute');
+          this.muteButton.style.opacity = '1';
+      }
   }
 
   nextTrack() {
-    if (this.playlist.length === 0) {
-      console.warn("Cannot navigate to next track: playlist is empty.");
-      return;
-    }
+    if (this.playlist.length === 0) return;
     this.currentTrackIndex = (this.currentTrackIndex + 1) % this.playlist.length;
-    this.audioElement.src = this.playlist[this.currentTrackIndex].src;
-    this.audioElement.load(); // Important to load the new source
-    if (this.isPlaying) {
-        this.play();
-    }
-    console.log("Next track:", this.playlist[this.currentTrackIndex].title);
-    this._updateButtonState(); // Update button if needed (e.g. if it displays track info)
-    this._updateTrackInfo(); // Update track info on nextTrack
+    this._changeTrack();
   }
 
   prevTrack() {
-    if (this.playlist.length === 0) {
-      console.warn("Cannot navigate to previous track: playlist is empty.");
-      return;
-    }
+    if (this.playlist.length === 0) return;
     this.currentTrackIndex--;
     if (this.currentTrackIndex < 0) {
       this.currentTrackIndex = this.playlist.length - 1;
     }
+    this._changeTrack();
+  }
+
+  _changeTrack() {
     this.audioElement.src = this.playlist[this.currentTrackIndex].src;
     this.audioElement.load();
     if (this.isPlaying) {
-      this.play();
+        this.play();
     }
-    console.log("Previous track:", this.playlist[this.currentTrackIndex].title);
-    this._updateButtonState(); // Update button if needed
-    this._updateTrackInfo(); // Update track info on prevTrack
+    this._updateButtonState();
+    this._updateTrackInfo();
   }
 
   _handleTrackEnd() {
-    console.log("Track ended:", this.playlist[this.currentTrackIndex].title);
     this.nextTrack();
+  }
+
+  _updateProgress(e) {
+    // Fixed: Use e.target instead of deprecated e.srcElement
+    const { duration, currentTime } = e.target;
+    if (isNaN(duration)) return;
+
+    const progressPercent = (currentTime / duration) * 100;
+
+    if (this.progressFill) {
+        this.progressFill.style.width = `${progressPercent}%`;
+    }
+
+    if (this.currentTimeEl) {
+        this.currentTimeEl.textContent = this._formatTime(currentTime);
+    }
+
+    if (this.progressContainer) {
+        this.progressContainer.setAttribute('aria-valuenow', Math.round(progressPercent));
+    }
+  }
+
+  _setProgress(e) {
+    const width = this.progressContainer.clientWidth;
+    const clickX = e.offsetX;
+    const duration = this.audioElement.duration;
+
+    if (isNaN(duration)) return;
+
+    this.audioElement.currentTime = (clickX / width) * duration;
+  }
+
+  _formatTime(seconds) {
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    return `${min}:${sec < 10 ? '0' + sec : sec}`;
   }
 
   _updateButtonState() {
@@ -146,12 +225,12 @@ class AudioManager {
       this.playPauseButton.classList.add('playing');
       this.playPauseButton.setAttribute('aria-label', 'Pause Music');
       if(iconPlay) iconPlay.style.display = 'none';
-      if(iconPause) iconPause.style.display = 'inline';
+      if(iconPause) iconPause.style.display = 'block';
       if(this.trackIcon) this.trackIcon.classList.add('playing');
     } else {
       this.playPauseButton.classList.remove('playing');
       this.playPauseButton.setAttribute('aria-label', 'Play Music');
-      if(iconPlay) iconPlay.style.display = 'inline';
+      if(iconPlay) iconPlay.style.display = 'block';
       if(iconPause) iconPause.style.display = 'none';
       if(this.trackIcon) this.trackIcon.classList.remove('playing');
     }
@@ -160,48 +239,38 @@ class AudioManager {
   _updateTrackInfo() {
     const trackInfoDiv = document.getElementById('trackInfo');
     if (trackInfoDiv) {
-      // Add fade-out class to trigger animation
       trackInfoDiv.classList.add('fade-out');
-
-      // Wait for the transition to finish (e.g., 300ms matches CSS) before updating text
       setTimeout(() => {
         if (this.playlist.length > 0 && this.playlist[this.currentTrackIndex]) {
           trackInfoDiv.textContent = this.playlist[this.currentTrackIndex].title;
         } else {
           trackInfoDiv.textContent = 'No track loaded';
         }
-        // Remove class to fade back in
         trackInfoDiv.classList.remove('fade-out');
       }, 300);
     }
   }
 }
 
-// Modify the instantiation at the end of the file:
-// DOMContentLoaded ensures the button exists before audioManager tries to access it.
 document.addEventListener('DOMContentLoaded', () => {
   const audioManager = new AudioManager('playPauseBtn', 'volumeSlider');
   audioManager.init();
 
-  // Add event listener for the previous button
   const prevBtn = document.getElementById('prevBtn');
   if (prevBtn) {
     prevBtn.addEventListener('click', () => audioManager.prevTrack());
   }
 
-  // Add event listener for the next button
   const nextBtn = document.getElementById('nextBtn');
   if (nextBtn) {
     nextBtn.addEventListener('click', () => audioManager.nextTrack());
   }
 
-  // Keyboard accessibility
   document.addEventListener('keydown', (event) => {
-    // Only handle global keys if not focused on an input (though we have none except volume)
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
 
     if (event.code === 'Space') {
-      event.preventDefault(); // Prevent scrolling
+      event.preventDefault();
       audioManager.togglePlayPause();
     } else if (event.code === 'ArrowRight') {
       audioManager.nextTrack();
@@ -211,8 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Export the AudioManager class for Node.js environments (e.g., testing)
-// Check if module and module.exports are defined to maintain browser compatibility
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = AudioManager;
 }

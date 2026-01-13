@@ -24,14 +24,23 @@
             <div class="track-display">
                 <div class="track-icon">
                     <!-- Refined Abstract Zen Icon -->
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 18V5L21 3V16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="18" cy="16" r="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="1" stroke-opacity="0.2"/>
+                        <path d="M12 18V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 6L16 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 6L8 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="18" r="2" fill="currentColor"/>
                     </svg>
                 </div>
                 <h2 id="trackInfo" class="track-title">Loading...</h2>
                 <div class="track-status">Now Playing</div>
+
+                <!-- Time Display -->
+                <div class="time-display">
+                    <span id="currentTime">0:00</span>
+                    <span class="time-separator">/</span>
+                    <span id="duration">0:00</span>
+                </div>
             </div>
         </section>
 
@@ -39,42 +48,53 @@
             <!-- Mobile Grab Handle -->
             <div class="sheet-handle"></div>
 
-            <div class="controls-row">
-                <button id="prevBtn" class="control-btn secondary-btn" aria-label="Previous Track">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M19 20L9 12L19 4V20Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-                        <path d="M5 19V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                </button>
-
-                <button id="playPauseBtn" class="control-btn primary-btn" aria-label="Play Music">
-                    <span class="icon-play">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 3L19 12L5 21V3Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-                        </svg>
-                    </span>
-                    <span class="icon-pause" style="display:none;">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M10 4H6V20H10V4Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-                            <path d="M18 4H14V20H18V4Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-                        </svg>
-                    </span>
-                </button>
-
-                <button id="nextBtn" class="control-btn secondary-btn" aria-label="Next Track">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M5 4L15 12L5 20V4Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-                        <path d="M19 5V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                </button>
+            <!-- Progress Bar (Integrated into top of panel) -->
+            <div class="progress-container" id="progressContainer" role="progressbar" aria-label="Track Progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div class="progress-fill" id="progressFill"></div>
             </div>
 
-            <div class="volume-container">
-                <svg class="volume-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                </svg>
-                <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5" aria-label="Volume">
+            <div class="control-content">
+                <div class="controls-row">
+                    <button id="prevBtn" class="control-btn secondary-btn" aria-label="Previous Track">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 20L9 12L19 4V20Z" fill="currentColor"/>
+                            <path d="M5 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+
+                    <button id="playPauseBtn" class="control-btn primary-btn" aria-label="Play Music">
+                        <span class="icon-play">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 4L18 12L6 20V4Z" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        <span class="icon-pause" style="display:none;">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/>
+                                <rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/>
+                            </svg>
+                        </span>
+                    </button>
+
+                    <button id="nextBtn" class="control-btn secondary-btn" aria-label="Next Track">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 4L15 12L5 20V4Z" fill="currentColor"/>
+                            <path d="M19 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="volume-wrapper">
+                    <button class="volume-btn" aria-label="Mute">
+                        <svg class="volume-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        </svg>
+                    </button>
+                    <div class="volume-slider-container">
+                        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5" aria-label="Volume">
+                    </div>
+                </div>
             </div>
         </div>
     </main>
