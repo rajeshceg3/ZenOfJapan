@@ -179,9 +179,10 @@ class AudioManager {
 
 // Modify the instantiation at the end of the file:
 // DOMContentLoaded ensures the button exists before audioManager tries to access it.
-document.addEventListener('DOMContentLoaded', () => {
-  const audioManager = new AudioManager('playPauseBtn', 'volumeSlider');
-  audioManager.init();
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const audioManager = new AudioManager('playPauseBtn', 'volumeSlider');
+    audioManager.init();
 
   // Add event listener for the previous button
   const prevBtn = document.getElementById('prevBtn');
@@ -209,7 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
       audioManager.prevTrack();
     }
   });
-});
+  });
+}
 
 // Export the AudioManager class for Node.js environments (e.g., testing)
 // Check if module and module.exports are defined to maintain browser compatibility
