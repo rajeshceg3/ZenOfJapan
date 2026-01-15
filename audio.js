@@ -44,6 +44,7 @@ class AudioManager {
 
     if (this.volumeSlider) {
       this.volumeSlider.value = this.audioElement.volume; // Set initial slider value
+      this._updateVolumeVisual(this.volumeSlider.value); // Initial visual fill
       this.volumeSlider.addEventListener('input', () => this.setVolume(this.volumeSlider.value));
     }
 
@@ -91,9 +92,18 @@ class AudioManager {
   setVolume(level) {
     if (level >= 0 && level <= 1) {
       this.audioElement.volume = level;
-      console.log("Volume set to:", level);
+      this._updateVolumeVisual(level); // Update the visual fill
+      // console.log("Volume set to:", level);
     } else {
       console.warn("Volume level must be between 0 and 1.");
+    }
+  }
+
+  _updateVolumeVisual(level) {
+    if (this.volumeSlider) {
+      // Calculate percentage for CSS linear-gradient
+      const percentage = level * 100;
+      this.volumeSlider.style.background = `linear-gradient(to right, var(--c-teal-500) 0%, var(--c-teal-500) ${percentage}%, rgba(13, 148, 136, 0.1) ${percentage}%, rgba(13, 148, 136, 0.1) 100%)`;
     }
   }
 
