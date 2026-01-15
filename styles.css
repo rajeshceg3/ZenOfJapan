@@ -22,8 +22,8 @@
   --accent-glow: rgba(45, 212, 191, 0.5); /* teal-400 */
 
   /* Glassmorphism Configuration */
-  --glass-surface: rgba(255, 255, 255, 0.75);
-  --glass-surface-mobile: rgba(255, 255, 255, 0.85);
+  --glass-surface: rgba(255, 255, 255, 0.65);
+  --glass-surface-mobile: rgba(255, 255, 255, 0.92);
   --glass-border: rgba(255, 255, 255, 0.6);
   --glass-highlight: rgba(255, 255, 255, 0.9);
   --glass-blur: 24px;
@@ -82,6 +82,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* Font features for Inter */
+  font-feature-settings: 'cv05', 'cv08', 'ss01';
 }
 
 /* --- Background Atmosphere --- */
@@ -111,8 +113,9 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
-  opacity: 0.4;
+  opacity: 0.35;
   mix-blend-mode: overlay;
+  /* Noise texture for that "premium paper" feel */
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   pointer-events: none;
 }
@@ -141,22 +144,24 @@ body {
 
 .app-header h1 {
   font-family: var(--font-serif);
-  font-size: 3.5rem;
+  font-size: 4rem;
   font-weight: 500;
   color: var(--c-slate-900);
-  letter-spacing: -0.03em;
-  background: linear-gradient(135deg, var(--c-slate-900) 0%, var(--c-teal-900) 100%);
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--c-slate-900) 0%, var(--c-teal-800) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: var(--space-xs);
+  text-shadow: 0 2px 10px rgba(13, 148, 136, 0.1);
 }
 
 .app-header .subtitle {
-  font-size: 1rem;
-  font-weight: 400;
-  color: var(--text-secondary);
-  letter-spacing: 0.05em;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--c-teal-700);
+  letter-spacing: 0.2em;
   text-transform: uppercase;
+  opacity: 0.8;
 }
 
 /* --- Player Card (Centerpiece) --- */
@@ -177,18 +182,19 @@ body {
 
 /* Artwork / Icon */
 .track-icon {
-  width: 160px;
-  height: 160px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #fff, var(--c-teal-50));
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--c-teal-600);
+  color: var(--c-teal-500);
   box-shadow:
     var(--shadow-xl),
-    var(--shadow-inner-white);
-  margin-bottom: var(--space-lg);
+    var(--shadow-inner-white),
+    0 0 0 1px rgba(255,255,255,0.4);
+  margin-bottom: var(--space-xl);
   position: relative;
   transition: transform var(--duration-normal) var(--ease-elastic);
 }
@@ -203,29 +209,29 @@ body {
 }
 
 .track-icon svg {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   filter: drop-shadow(0 4px 6px rgba(13, 148, 136, 0.2));
 }
 
 .track-icon.playing {
-  animation: rotateDisc 12s linear infinite;
+  animation: breatheDisc 4s ease-in-out infinite;
 }
 
-@keyframes rotateDisc {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes breatheDisc {
+  0%, 100% { transform: scale(1); box-shadow: var(--shadow-xl); }
+  50% { transform: scale(1.02); box-shadow: 0 30px 60px -12px rgba(var(--shadow-color), 0.35); }
 }
 
 /* Typography */
 .track-title {
   font-family: var(--font-serif);
-  font-size: 4rem;
-  line-height: 1.1;
-  font-weight: 500;
-  letter-spacing: -0.04em;
+  font-size: 5rem;
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: -0.05em;
   color: var(--c-slate-900);
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-lg);
   transition: opacity 0.3s ease;
 }
 
@@ -236,17 +242,24 @@ body {
 .track-status {
   display: inline-flex;
   align-items: center;
-  padding: 6px 16px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  padding: 8px 20px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 99px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--c-teal-700);
-  backdrop-filter: blur(8px);
+  color: var(--c-teal-800);
+  backdrop-filter: blur(12px);
   box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.track-status:hover {
+  background: #fff;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 /* --- Control Panel (Desktop: Floating Pill) --- */
@@ -305,8 +318,8 @@ body {
 }
 
 .secondary-btn {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
 }
 
 .secondary-btn:hover {
@@ -321,16 +334,16 @@ body {
 }
 
 .primary-btn {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   background: var(--c-slate-900);
   color: #fff;
   box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.4); /* Slate shadow */
 }
 
 .primary-btn svg {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   fill: currentColor;
 }
 
@@ -351,47 +364,65 @@ body {
   gap: var(--space-sm);
   padding-left: var(--space-lg);
   border-left: 1px solid rgba(0,0,0,0.06);
-  height: 40px;
+  height: 48px;
 }
 
 .volume-icon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   color: var(--text-secondary);
   opacity: 0.8;
 }
 
+/* Custom Range Input (Ultrathink Style) */
 input[type=range] {
   -webkit-appearance: none;
-  width: 100px;
-  height: 24px; /* Touch area */
-  background: transparent;
+  width: 120px;
+  height: 32px; /* Touch area */
+  /* Background is managed by JS for the progress fill, but we set a default/fallback here */
+  background: rgba(13, 148, 136, 0.1);
+  background-size: 100% 6px; /* Visual track height */
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 99px; /* Rounds the background bar */
   cursor: pointer;
 }
 
 input[type=range]:focus { outline: none; }
 
+/* Track - Webkit */
+/* We make the track transparent so the input's background (gradient) shows through */
 input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
-  height: 4px;
-  background: rgba(0,0,0,0.1);
-  border-radius: 99px;
+  height: 32px; /* Match input height to align thumb correctly */
+  background: transparent;
+  border: none;
 }
 
+/* Thumb */
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  height: 16px;
-  width: 16px;
+  height: 20px;
+  width: 20px;
   border-radius: 50%;
   background: #fff;
-  border: 1px solid rgba(0,0,0,0.1);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-top: -6px; /* center on track */
-  transition: transform 0.2s var(--ease-elastic);
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  margin-top: 6px; /* Center vertically: (32px container - 20px thumb) / 2 = 6px */
+  transition: transform 0.2s var(--ease-elastic), box-shadow 0.2s ease;
+  position: relative;
+  z-index: 2;
 }
 
 input[type=range]:hover::-webkit-slider-thumb {
-  transform: scale(1.2);
+  transform: scale(1.15);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  cursor: grab;
+}
+
+input[type=range]:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.05);
 }
 
 /* Footer */
@@ -401,6 +432,8 @@ footer {
   font-size: 0.8rem;
   color: var(--text-secondary);
   opacity: 0.5;
+  font-weight: 500;
+  letter-spacing: 0.05em;
 }
 
 /* Animations */
@@ -425,48 +458,56 @@ footer {
     padding: 0;
     height: 100%;
     display: block; /* Break flex centering */
-    overflow: hidden;
+    overflow-y: auto; /* Allow scrolling content behind the sheet */
+    /* Add padding equal to sheet height + safe area to prevent occlusion */
+    padding-bottom: calc(300px + env(safe-area-inset-bottom));
   }
 
   /* 1. Header Area */
   .app-header {
     position: relative;
     top: auto;
-    margin-top: calc(env(safe-area-inset-top) + var(--space-xl));
+    margin-top: calc(env(safe-area-inset-top) + var(--space-lg));
     margin-bottom: var(--space-lg);
     width: 100%;
   }
 
   .app-header h1 {
-    font-size: 2.5rem; /* Smaller for mobile */
+    font-size: 2.75rem; /* Smaller for mobile */
   }
 
   /* 2. Main Content (Hero) */
   .player-card {
     height: auto;
-    margin-top: var(--space-lg);
+    margin-top: var(--space-xl);
     padding: 0 var(--space-lg);
   }
 
   /* Large tactile artwork */
   .track-icon {
-    width: 280px;
-    height: 280px;
+    width: 240px; /* Reduced to fit better on small screens */
+    height: 240px;
     margin-bottom: var(--space-xl);
     box-shadow:
-      0 20px 40px -10px rgba(var(--shadow-color), 0.2),
-      var(--shadow-inner-white);
+      0 25px 50px -12px rgba(var(--shadow-color), 0.25),
+      var(--shadow-inner-white),
+      0 0 0 1px rgba(255,255,255,0.4);
   }
 
   .track-icon svg {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
   }
 
   .track-title {
-    font-size: 2.75rem; /* Readable but grand */
-    line-height: 1.2;
+    font-size: 3rem; /* Better proportion */
+    line-height: 1.1;
     margin-bottom: var(--space-md);
+  }
+
+  .track-status {
+    padding: 10px 24px;
+    font-size: 0.8rem;
   }
 
   /* 3. Bottom Sheet (The Mobile "Console") */
@@ -476,7 +517,7 @@ footer {
     left: 0;
     width: 100%;
     max-width: none;
-    border-radius: 32px 32px 0 0; /* Smooth distinct curve */
+    border-radius: 40px 40px 0 0; /* Smooth distinct curve */
 
     background: var(--glass-surface-mobile);
     backdrop-filter: blur(40px) saturate(180%);
@@ -486,11 +527,11 @@ footer {
     gap: var(--space-lg);
 
     /* Padding handles safe area */
-    padding: var(--space-md) var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom)) var(--space-lg);
+    padding: var(--space-lg) var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom)) var(--space-lg);
 
     box-shadow:
-      0 -10px 40px rgba(0,0,0,0.1),
-      inset 0 1px 0 rgba(255,255,255,0.6);
+      0 -10px 40px rgba(0,0,0,0.05),
+      inset 0 1px 0 rgba(255,255,255,0.8);
     border: none;
 
     animation: slideUpSheet 0.6s cubic-bezier(0.19, 1, 0.22, 1);
@@ -504,9 +545,9 @@ footer {
   /* Sheet Handle */
   .sheet-handle {
     display: block;
-    width: 40px;
-    height: 4px;
-    background: rgba(0,0,0,0.2);
+    width: 48px;
+    height: 5px;
+    background: rgba(0,0,0,0.1);
     border-radius: 100px;
     margin: 0 auto; /* Center it */
   }
@@ -515,17 +556,17 @@ footer {
   .controls-row {
     width: 100%;
     justify-content: space-between; /* Spread controls evenly */
-    padding: 0 var(--space-md);
+    padding: 0 var(--space-sm);
   }
 
   .primary-btn {
-    width: 80px;
-    height: 80px; /* Big touch target */
+    width: 88px;
+    height: 88px; /* Big touch target */
   }
 
   .secondary-btn {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
   }
 
   /* Volume below controls */
@@ -534,14 +575,15 @@ footer {
     border-left: none;
     padding-left: 0;
     justify-content: center;
-    background: rgba(0,0,0,0.03); /* Subtle well for volume */
-    border-radius: 16px;
-    padding: var(--space-sm) var(--space-md);
+    background: rgba(13, 148, 136, 0.05); /* Subtle well for volume */
+    border-radius: 24px;
+    padding: var(--space-md) var(--space-lg);
+    height: auto;
   }
 
   input[type=range] {
     width: 100%; /* Full width */
   }
 
-  footer { display: none; }
+  footer { display: none !important; }
 }
