@@ -44,6 +44,12 @@
             <!-- Mobile Grab Handle -->
             <div class="sheet-handle"></div>
 
+            <div class="progress-section">
+                <span id="currentTime" class="time-text">0:00</span>
+                <input type="range" id="seekSlider" class="seek-slider" min="0" value="0" step="0.1" aria-label="Seek Track">
+                <span id="totalDuration" class="time-text">0:00</span>
+            </div>
+
             <div class="controls-row">
                 <button id="prevBtn" class="control-btn secondary-btn" aria-label="Previous Track">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
