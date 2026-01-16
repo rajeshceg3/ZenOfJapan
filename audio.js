@@ -10,13 +10,20 @@ class AudioManager {
     this.isPlaying = false;
     this.playPauseButton = document.getElementById(playPauseButtonId); // Get button
     this.volumeSlider = document.getElementById(volumeSliderId); // Get volume slider
+    this.seekSlider = document.getElementById('seekSlider');
+    this.currentTimeDisplay = document.getElementById('currentTime');
+    this.totalDurationDisplay = document.getElementById('totalDuration');
     this.trackIcon = document.querySelector('.track-icon'); // Get track icon
 
     this._handleTrackEnd = this._handleTrackEnd.bind(this);
     this._updateButtonState = this._updateButtonState.bind(this);
+    this._updateProgress = this._updateProgress.bind(this);
+    this.seek = this.seek.bind(this);
     this.prevTrack = this.prevTrack.bind(this); // Bind prevTrack
     this.nextTrack = this.nextTrack.bind(this); // Bind nextTrack
     this._updateTrackInfo = this._updateTrackInfo.bind(this); // Bind _updateTrackInfo
+
+    this.isDragging = false; // Track dragging state
   }
 
   init() {
@@ -34,7 +41,14 @@ class AudioManager {
     });
     this.audioElement.addEventListener('loadedmetadata', () => {
       // console.log("Track metadata loaded:", this.playlist[this.currentTrackIndex].title);
+      if (this.totalDurationDisplay) {
+        this.totalDurationDisplay.textContent = this.formatTime(this.audioElement.duration);
+      }
+      if (this.seekSlider) {
+        this.seekSlider.max = this.audioElement.duration;
+      }
     });
+    this.audioElement.addEventListener('timeupdate', this._updateProgress);
     this.audioElement.addEventListener('play', this._updateButtonState);
     this.audioElement.addEventListener('pause', this._updateButtonState);
 
@@ -44,8 +58,29 @@ class AudioManager {
 
     if (this.volumeSlider) {
       this.volumeSlider.value = this.audioElement.volume; // Set initial slider value
-      this._updateVolumeVisual(this.volumeSlider.value); // Initial visual fill
+      this._updateSliderVisual(this.volumeSlider, this.audioElement.volume, 1); // Initial visual fill
       this.volumeSlider.addEventListener('input', () => this.setVolume(this.volumeSlider.value));
+    }
+
+    if (this.seekSlider) {
+      this.seekSlider.addEventListener('mousedown', () => { this.isDragging = true; });
+      this.seekSlider.addEventListener('touchstart', () => { this.isDragging = true; }, { passive: true });
+
+      this.seekSlider.addEventListener('input', (e) => {
+        const time = parseFloat(e.target.value);
+        if (this.currentTimeDisplay) {
+            this.currentTimeDisplay.textContent = this.formatTime(time);
+        }
+        this._updateSliderVisual(this.seekSlider, time, this.audioElement.duration || 100);
+      });
+
+      this.seekSlider.addEventListener('change', (e) => {
+        this.isDragging = false;
+        this.seek(parseFloat(e.target.value));
+      });
+
+      this.seekSlider.addEventListener('mouseup', () => { this.isDragging = false; });
+      this.seekSlider.addEventListener('touchend', () => { this.isDragging = false; });
     }
 
     this._updateButtonState(); // Initial button state
@@ -92,19 +127,49 @@ class AudioManager {
   setVolume(level) {
     if (level >= 0 && level <= 1) {
       this.audioElement.volume = level;
-      this._updateVolumeVisual(level); // Update the visual fill
+      this._updateSliderVisual(this.volumeSlider, level, 1); // Update the visual fill
       // console.log("Volume set to:", level);
     } else {
       console.warn("Volume level must be between 0 and 1.");
     }
   }
 
-  _updateVolumeVisual(level) {
-    if (this.volumeSlider) {
-      // Calculate percentage for CSS linear-gradient
-      const percentage = level * 100;
-      this.volumeSlider.style.background = `linear-gradient(to right, var(--c-teal-500) 0%, var(--c-teal-500) ${percentage}%, rgba(13, 148, 136, 0.1) ${percentage}%, rgba(13, 148, 136, 0.1) 100%)`;
+  seek(time) {
+    if (isFinite(time)) {
+      this.audioElement.currentTime = time;
     }
+  }
+
+  _updateProgress() {
+    // Only update slider position if user is NOT dragging it
+    if (this.seekSlider && !this.isDragging) {
+        this.seekSlider.value = this.audioElement.currentTime;
+        this._updateSliderVisual(this.seekSlider, this.audioElement.currentTime, this.audioElement.duration || 100);
+    }
+    // Always update text display regardless of dragging (or maybe not?
+    // If dragging, input event handles text. If not dragging, this handles it.
+    // So if !isDragging, update text.
+    // Actually, input event updates text while dragging.
+    // So here we update only if not dragging to avoid conflict/flicker?
+    // Let's stick to updating only when not dragging, as the input event covers the dragging case.
+    if (this.currentTimeDisplay && !this.isDragging) {
+        this.currentTimeDisplay.textContent = this.formatTime(this.audioElement.currentTime);
+    }
+  }
+
+  _updateSliderVisual(slider, value, max) {
+    if (slider) {
+      // Calculate percentage for CSS linear-gradient
+      const percentage = (value / max) * 100;
+      slider.style.background = `linear-gradient(to right, var(--c-teal-500) 0%, var(--c-teal-500) ${percentage}%, rgba(13, 148, 136, 0.1) ${percentage}%, rgba(13, 148, 136, 0.1) 100%)`;
+    }
+  }
+
+  formatTime(seconds) {
+    if (!isFinite(seconds)) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
   }
 
   nextTrack() {
