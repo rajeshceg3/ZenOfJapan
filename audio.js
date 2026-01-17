@@ -31,8 +31,11 @@ class AudioManager {
       console.error("Playlist is empty. Cannot initialize audio.");
       return;
     }
+
+    this.loadState(); // Load saved preferences
+
     this.audioElement.src = this.playlist[this.currentTrackIndex].src;
-    this.audioElement.volume = 0.5;
+    this.audioElement.volume = typeof this.savedVolume !== 'undefined' ? this.savedVolume : 0.5;
 
     this.audioElement.addEventListener('ended', this._handleTrackEnd);
     this.audioElement.addEventListener('error', (e) => {
@@ -84,7 +87,6 @@ class AudioManager {
     }
 
     this._updateButtonState(); // Initial button state
-    console.log("AudioManager initialized. Current track:", this.playlist[this.currentTrackIndex].title);
     this._updateTrackInfo(); // Update track info on init
   }
 
@@ -128,6 +130,7 @@ class AudioManager {
     if (level >= 0 && level <= 1) {
       this.audioElement.volume = level;
       this._updateSliderVisual(this.volumeSlider, level, 1); // Update the visual fill
+      this.saveState();
       // console.log("Volume set to:", level);
     } else {
       console.warn("Volume level must be between 0 and 1.");
@@ -167,7 +170,7 @@ class AudioManager {
   }
 
   formatTime(seconds) {
-    if (!isFinite(seconds)) return "0:00";
+    if (!isFinite(seconds)) {return "0:00";}
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m}:${s < 10 ? '0' : ''}${s}`;
@@ -184,7 +187,7 @@ class AudioManager {
     if (this.isPlaying) {
         this.play();
     }
-    console.log("Next track:", this.playlist[this.currentTrackIndex].title);
+    this.saveState();
     this._updateButtonState(); // Update button if needed (e.g. if it displays track info)
     this._updateTrackInfo(); // Update track info on nextTrack
   }
@@ -203,33 +206,32 @@ class AudioManager {
     if (this.isPlaying) {
       this.play();
     }
-    console.log("Previous track:", this.playlist[this.currentTrackIndex].title);
+    this.saveState();
     this._updateButtonState(); // Update button if needed
     this._updateTrackInfo(); // Update track info on prevTrack
   }
 
   _handleTrackEnd() {
-    console.log("Track ended:", this.playlist[this.currentTrackIndex].title);
     this.nextTrack();
   }
 
   _updateButtonState() {
-    if (!this.playPauseButton) return;
+    if (!this.playPauseButton) {return;}
     const iconPlay = this.playPauseButton.querySelector('.icon-play');
     const iconPause = this.playPauseButton.querySelector('.icon-pause');
 
     if (this.isPlaying) {
       this.playPauseButton.classList.add('playing');
       this.playPauseButton.setAttribute('aria-label', 'Pause Music');
-      if(iconPlay) iconPlay.style.display = 'none';
-      if(iconPause) iconPause.style.display = 'inline';
-      if(this.trackIcon) this.trackIcon.classList.add('playing');
+      if(iconPlay) {iconPlay.style.display = 'none';}
+      if(iconPause) {iconPause.style.display = 'inline';}
+      if(this.trackIcon) {this.trackIcon.classList.add('playing');}
     } else {
       this.playPauseButton.classList.remove('playing');
       this.playPauseButton.setAttribute('aria-label', 'Play Music');
-      if(iconPlay) iconPlay.style.display = 'inline';
-      if(iconPause) iconPause.style.display = 'none';
-      if(this.trackIcon) this.trackIcon.classList.remove('playing');
+      if(iconPlay) {iconPlay.style.display = 'inline';}
+      if(iconPause) {iconPause.style.display = 'none';}
+      if(this.trackIcon) {this.trackIcon.classList.remove('playing');}
     }
   }
 
@@ -249,6 +251,35 @@ class AudioManager {
         // Remove class to fade back in
         trackInfoDiv.classList.remove('fade-out');
       }, 300);
+    }
+  }
+
+  saveState() {
+    const state = {
+      volume: this.audioElement.volume,
+      trackIndex: this.currentTrackIndex
+    };
+    try {
+      localStorage.setItem('audioPlayerState', JSON.stringify(state));
+    } catch (e) {
+      console.warn("Could not save state to localStorage:", e);
+    }
+  }
+
+  loadState() {
+    try {
+      const saved = localStorage.getItem('audioPlayerState');
+      if (saved) {
+        const state = JSON.parse(saved);
+        if (typeof state.volume === 'number' && state.volume >= 0 && state.volume <= 1) {
+          this.savedVolume = state.volume;
+        }
+        if (typeof state.trackIndex === 'number' && state.trackIndex >= 0 && state.trackIndex < this.playlist.length) {
+          this.currentTrackIndex = state.trackIndex;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load state from localStorage:", e);
     }
   }
 }
@@ -275,7 +306,7 @@ if (typeof document !== 'undefined') {
   // Keyboard accessibility
   document.addEventListener('keydown', (event) => {
     // Only handle global keys if not focused on an input (though we have none except volume)
-    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {return;}
 
     if (event.code === 'Space') {
       event.preventDefault(); // Prevent scrolling
