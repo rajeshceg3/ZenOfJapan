@@ -161,7 +161,8 @@ class AudioManager {
     if (slider) {
       // Calculate percentage for CSS linear-gradient
       const percentage = (value / max) * 100;
-      slider.style.background = `linear-gradient(to right, var(--c-teal-500) 0%, var(--c-teal-500) ${percentage}%, rgba(13, 148, 136, 0.1) ${percentage}%, rgba(13, 148, 136, 0.1) 100%)`;
+      // Use the CSS variable for the unfilled track portion to ensure sync with styles.css
+      slider.style.background = `linear-gradient(to right, var(--c-teal-500) 0%, var(--c-teal-500) ${percentage}%, var(--slider-track-bg) ${percentage}%, var(--slider-track-bg) 100%)`;
     }
   }
 
