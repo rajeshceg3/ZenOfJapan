@@ -1,0 +1,21 @@
+{
+  "name": "Zen of Japan",
+  "short_name": "Zen",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F5F7FA",
+  "theme_color": "#F5F7FA",
+  "description": "Immerse yourself in tranquility with our Japanese-inspired relaxation experience.",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
