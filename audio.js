@@ -40,6 +40,7 @@ class AudioManager {
     this.audioElement.addEventListener('ended', this._handleTrackEnd);
     this.audioElement.addEventListener('error', (e) => {
       console.error("Error with audio element:", e);
+      this._handleError("Audio Unavailable");
       this._updateButtonState(); // Reflect error in button state
     });
     this.audioElement.addEventListener('loadedmetadata', () => {
@@ -54,6 +55,9 @@ class AudioManager {
     this.audioElement.addEventListener('timeupdate', this._updateProgress);
     this.audioElement.addEventListener('play', this._updateButtonState);
     this.audioElement.addEventListener('pause', this._updateButtonState);
+    this.audioElement.addEventListener('waiting', () => this._setLoadingState(true));
+    this.audioElement.addEventListener('canplay', () => this._setLoadingState(false));
+    this.audioElement.addEventListener('playing', () => this._setLoadingState(false));
 
     if (this.playPauseButton) {
         this.playPauseButton.addEventListener('click', () => this.togglePlayPause());
@@ -108,12 +112,14 @@ class AudioManager {
     if (playPromise !== undefined) {
       playPromise.then(() => {
         this.isPlaying = true;
+        this._clearError();
         // console.log("Playing:", this.playlist[this.currentTrackIndex].title);
         // this._updateButtonState(); // Handled by 'play' event
       })
       .catch(error => {
         console.error("Error playing audio:", error);
         this.isPlaying = false;
+        this._handleError("Playback Error");
         this._updateButtonState(); // Ensure button reflects that playback failed
       });
     }
@@ -163,7 +169,10 @@ class AudioManager {
   _updateSliderVisual(slider, value, max) {
     if (slider) {
       // Calculate percentage for CSS linear-gradient
-      const percentage = (value / max) * 100;
+      let percentage = (value / max) * 100;
+      if (isNaN(percentage) || !isFinite(percentage)) {
+          percentage = 0;
+      }
       // Use the CSS variable for the unfilled track portion to ensure sync with styles.css
       slider.style.background = `linear-gradient(to right, var(--c-teal-500) 0%, var(--c-teal-500) ${percentage}%, var(--slider-track-bg) ${percentage}%, var(--slider-track-bg) 100%)`;
     }
@@ -219,20 +228,41 @@ class AudioManager {
     if (!this.playPauseButton) {return;}
     const iconPlay = this.playPauseButton.querySelector('.icon-play');
     const iconPause = this.playPauseButton.querySelector('.icon-pause');
+    const iconLoading = this.playPauseButton.querySelector('.icon-loading');
+
+    // If waiting, the loading state handles visibility.
+    if (!iconLoading.classList.contains('hidden')) {
+        if(iconPlay) {iconPlay.classList.add('hidden');}
+        if(iconPause) {iconPause.classList.add('hidden');}
+        return;
+    }
 
     if (this.isPlaying) {
       this.playPauseButton.classList.add('playing');
       this.playPauseButton.setAttribute('aria-label', 'Pause Music');
-      if(iconPlay) {iconPlay.style.display = 'none';}
-      if(iconPause) {iconPause.style.display = 'inline';}
+      if(iconPlay) {iconPlay.classList.add('hidden');}
+      if(iconPause) {iconPause.classList.remove('hidden');}
       if(this.trackIcon) {this.trackIcon.classList.add('playing');}
     } else {
       this.playPauseButton.classList.remove('playing');
       this.playPauseButton.setAttribute('aria-label', 'Play Music');
-      if(iconPlay) {iconPlay.style.display = 'inline';}
-      if(iconPause) {iconPause.style.display = 'none';}
+      if(iconPlay) {iconPlay.classList.remove('hidden');}
+      if(iconPause) {iconPause.classList.add('hidden');}
       if(this.trackIcon) {this.trackIcon.classList.remove('playing');}
     }
+  }
+
+  _setLoadingState(isLoading) {
+      if (!this.playPauseButton) {return;}
+      const iconLoading = this.playPauseButton.querySelector('.icon-loading');
+      if (!iconLoading) {return;}
+
+      if (isLoading) {
+          iconLoading.classList.remove('hidden');
+      } else {
+          iconLoading.classList.add('hidden');
+      }
+      this._updateButtonState();
   }
 
   _updateTrackInfo() {
@@ -250,7 +280,24 @@ class AudioManager {
         }
         // Remove class to fade back in
         trackInfoDiv.classList.remove('fade-out');
+        this._clearError(); // Clear any previous errors on track change
       }, 300);
+    }
+  }
+
+  _handleError(message) {
+    const statusEl = document.querySelector('.track-status');
+    if (statusEl) {
+      statusEl.textContent = message || "Error";
+      statusEl.classList.add('error');
+    }
+  }
+
+  _clearError() {
+    const statusEl = document.querySelector('.track-status');
+    if (statusEl) {
+      statusEl.textContent = "Now Playing";
+      statusEl.classList.remove('error');
     }
   }
 
