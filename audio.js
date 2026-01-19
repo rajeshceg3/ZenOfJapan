@@ -1,5 +1,37 @@
+// Utility Class for User Feedback
+class ToastManager {
+  static show(message, type = 'info') {
+    // Check if toast container exists, if not create it (lazy initialization)
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+
+    container.appendChild(toast);
+
+    // Trigger animation
+    requestAnimationFrame(() => {
+      toast.classList.add('show');
+    });
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+      toast.classList.remove('show');
+      toast.addEventListener('transitionend', () => {
+        toast.remove();
+      });
+    }, 3000);
+  }
+}
+
 class AudioManager {
-  constructor(playPauseButtonId, volumeSliderId) { // Accept button ID and volume slider ID
+  constructor(playPauseButtonId, volumeSliderId) {
     this.audioElement = new Audio();
     this.currentTrackIndex = 0;
     this.playlist = [
@@ -8,22 +40,27 @@ class AudioManager {
       { title: "Temple Chants", src: "assets/audio/temple-chants.mp3", duration: 200 },
     ];
     this.isPlaying = false;
-    this.playPauseButton = document.getElementById(playPauseButtonId); // Get button
-    this.volumeSlider = document.getElementById(volumeSliderId); // Get volume slider
+    this.userVolume = 0.5; // Track user preference separately from current fading volume
+
+    // UI Elements
+    this.playPauseButton = document.getElementById(playPauseButtonId);
+    this.volumeSlider = document.getElementById(volumeSliderId);
     this.seekSlider = document.getElementById('seekSlider');
     this.currentTimeDisplay = document.getElementById('currentTime');
     this.totalDurationDisplay = document.getElementById('totalDuration');
-    this.trackIcon = document.querySelector('.track-icon'); // Get track icon
+    this.trackIcon = document.querySelector('.track-icon');
 
+    // Bindings
     this._handleTrackEnd = this._handleTrackEnd.bind(this);
     this._updateButtonState = this._updateButtonState.bind(this);
     this._updateProgress = this._updateProgress.bind(this);
     this.seek = this.seek.bind(this);
-    this.prevTrack = this.prevTrack.bind(this); // Bind prevTrack
-    this.nextTrack = this.nextTrack.bind(this); // Bind nextTrack
-    this._updateTrackInfo = this._updateTrackInfo.bind(this); // Bind _updateTrackInfo
+    this.prevTrack = this.prevTrack.bind(this);
+    this.nextTrack = this.nextTrack.bind(this);
+    this._updateTrackInfo = this._updateTrackInfo.bind(this);
 
-    this.isDragging = false; // Track dragging state
+    this.isDragging = false;
+    this.isFading = false;
   }
 
   init() {
@@ -32,19 +69,20 @@ class AudioManager {
       return;
     }
 
-    this.loadState(); // Load saved preferences
+    this.loadState();
 
     this.audioElement.src = this.playlist[this.currentTrackIndex].src;
-    this.audioElement.volume = typeof this.savedVolume !== 'undefined' ? this.savedVolume : 0.5;
+    this.audioElement.volume = this.userVolume;
 
+    // Event Listeners
     this.audioElement.addEventListener('ended', this._handleTrackEnd);
     this.audioElement.addEventListener('error', (e) => {
       console.error("Error with audio element:", e);
       this._handleError("Audio Unavailable");
-      this._updateButtonState(); // Reflect error in button state
+      this._updateButtonState();
     });
+
     this.audioElement.addEventListener('loadedmetadata', () => {
-      // console.log("Track metadata loaded:", this.playlist[this.currentTrackIndex].title);
       if (this.totalDurationDisplay) {
         this.totalDurationDisplay.textContent = this.formatTime(this.audioElement.duration);
       }
@@ -52,6 +90,7 @@ class AudioManager {
         this.seekSlider.max = this.audioElement.duration;
       }
     });
+
     this.audioElement.addEventListener('timeupdate', this._updateProgress);
     this.audioElement.addEventListener('play', this._updateButtonState);
     this.audioElement.addEventListener('pause', this._updateButtonState);
@@ -64,8 +103,8 @@ class AudioManager {
     }
 
     if (this.volumeSlider) {
-      this.volumeSlider.value = this.audioElement.volume; // Set initial slider value
-      this._updateSliderVisual(this.volumeSlider, this.audioElement.volume, 1); // Initial visual fill
+      this.volumeSlider.value = this.userVolume;
+      this._updateSliderVisual(this.volumeSlider, this.userVolume, 1);
       this.volumeSlider.addEventListener('input', () => this.setVolume(this.volumeSlider.value));
     }
 
@@ -90,8 +129,8 @@ class AudioManager {
       this.seekSlider.addEventListener('touchend', () => { this.isDragging = false; });
     }
 
-    this._updateButtonState(); // Initial button state
-    this._updateTrackInfo(); // Update track info on init
+    this._updateButtonState();
+    this._updateTrackInfo();
   }
 
   togglePlayPause() {
@@ -102,44 +141,103 @@ class AudioManager {
     }
   }
 
-  play() {
+  // Refactored Play with Retry Logic and Fade In
+  async play(withFade = true) {
     if (!this.audioElement.src || this.audioElement.currentSrc === "") {
-        // If src is not set, or if it's an empty string (can happen on initial load or after error)
         this.audioElement.src = this.playlist[this.currentTrackIndex].src;
     }
 
-    const playPromise = this.audioElement.play();
-    if (playPromise !== undefined) {
-      playPromise.then(() => {
-        this.isPlaying = true;
-        this._clearError();
-        // console.log("Playing:", this.playlist[this.currentTrackIndex].title);
-        // this._updateButtonState(); // Handled by 'play' event
-      })
-      .catch(error => {
-        console.error("Error playing audio:", error);
-        this.isPlaying = false;
-        this._handleError("Playback Error");
-        this._updateButtonState(); // Ensure button reflects that playback failed
-      });
+    try {
+      if (withFade) {
+          this.audioElement.volume = 0; // Start at 0 for fade in
+      } else {
+          this.audioElement.volume = this.userVolume;
+      }
+
+      await this._safePlayPromise();
+
+      this.isPlaying = true;
+      this._clearError();
+
+      if (withFade) {
+          await this._fadeIn(this.userVolume);
+      }
+    } catch (error) {
+      console.error("Playback failed after retries:", error);
+      this.isPlaying = false;
+      this._handleError("Playback Failed");
+      ToastManager.show("Playback failed. Please check your connection.", "error");
+      this._updateButtonState();
     }
+  }
+
+  // Internal Retry Logic
+  async _safePlayPromise(retries = 3) {
+      for (let i = 0; i < retries; i++) {
+          try {
+              await this.audioElement.play();
+              return; // Success
+          } catch (e) {
+              if (i === retries - 1) {throw e;} // Fail on last try
+              // Exponential backoff: 500ms, 1000ms, 1500ms...
+              await new Promise(r => setTimeout(r, 500 * (i + 1)));
+          }
+      }
   }
 
   pause() {
     this.audioElement.pause();
     this.isPlaying = false;
-    // console.log("Paused:", this.playlist[this.currentTrackIndex].title);
-    // this._updateButtonState(); // Handled by 'pause' event
+  }
+
+  // Crossfade Utilities
+  _fadeOut(duration = 500) {
+      if (this.isFading) {return Promise.resolve();}
+      this.isFading = true;
+      return new Promise(resolve => {
+          const startVol = this.audioElement.volume;
+          const step = startVol / (duration / 50);
+          const fadeInterval = setInterval(() => {
+              if (this.audioElement.volume - step > 0.01) {
+                  this.audioElement.volume -= step;
+              } else {
+                  this.audioElement.volume = 0;
+                  clearInterval(fadeInterval);
+                  this.isFading = false;
+                  resolve();
+              }
+          }, 50);
+      });
+  }
+
+  _fadeIn(targetVol, duration = 500) {
+      if (this.isFading) {return Promise.resolve();}
+      this.isFading = true;
+      this.audioElement.volume = 0;
+      return new Promise(resolve => {
+          const step = targetVol / (duration / 50);
+          const fadeInterval = setInterval(() => {
+              if (this.audioElement.volume + step < targetVol) {
+                  this.audioElement.volume += step;
+              } else {
+                  this.audioElement.volume = targetVol;
+                  clearInterval(fadeInterval);
+                  this.isFading = false;
+                  resolve();
+              }
+          }, 50);
+      });
   }
 
   setVolume(level) {
     if (level >= 0 && level <= 1) {
-      this.audioElement.volume = level;
-      this._updateSliderVisual(this.volumeSlider, level, 1); // Update the visual fill
+      this.userVolume = parseFloat(level); // Store user preference
+      // Only update element volume if not currently fading to avoid conflict
+      if (!this.isFading) {
+          this.audioElement.volume = this.userVolume;
+      }
+      this._updateSliderVisual(this.volumeSlider, level, 1);
       this.saveState();
-      // console.log("Volume set to:", level);
-    } else {
-      console.warn("Volume level must be between 0 and 1.");
     }
   }
 
@@ -150,17 +248,10 @@ class AudioManager {
   }
 
   _updateProgress() {
-    // Only update slider position if user is NOT dragging it
     if (this.seekSlider && !this.isDragging) {
         this.seekSlider.value = this.audioElement.currentTime;
         this._updateSliderVisual(this.seekSlider, this.audioElement.currentTime, this.audioElement.duration || 100);
     }
-    // Always update text display regardless of dragging (or maybe not?
-    // If dragging, input event handles text. If not dragging, this handles it.
-    // So if !isDragging, update text.
-    // Actually, input event updates text while dragging.
-    // So here we update only if not dragging to avoid conflict/flicker?
-    // Let's stick to updating only when not dragging, as the input event covers the dragging case.
     if (this.currentTimeDisplay && !this.isDragging) {
         this.currentTimeDisplay.textContent = this.formatTime(this.audioElement.currentTime);
     }
@@ -168,12 +259,8 @@ class AudioManager {
 
   _updateSliderVisual(slider, value, max) {
     if (slider) {
-      // Calculate percentage for CSS linear-gradient
       let percentage = (value / max) * 100;
-      if (isNaN(percentage) || !isFinite(percentage)) {
-          percentage = 0;
-      }
-      // Use the CSS variable for the unfilled track portion to ensure sync with styles.css
+      if (isNaN(percentage) || !isFinite(percentage)) {percentage = 0;}
       slider.style.background = `linear-gradient(to right, var(--c-teal-500) 0%, var(--c-teal-500) ${percentage}%, var(--slider-track-bg) ${percentage}%, var(--slider-track-bg) 100%)`;
     }
   }
@@ -185,39 +272,41 @@ class AudioManager {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   }
 
-  nextTrack() {
-    if (this.playlist.length === 0) {
-      console.warn("Cannot navigate to next track: playlist is empty.");
-      return;
-    }
-    this.currentTrackIndex = (this.currentTrackIndex + 1) % this.playlist.length;
-    this.audioElement.src = this.playlist[this.currentTrackIndex].src;
-    this.audioElement.load(); // Important to load the new source
+  async nextTrack() {
+    if (this.playlist.length === 0) {return;}
+
     if (this.isPlaying) {
-        this.play();
+        await this._fadeOut(300); // Quick fade out
     }
-    this.saveState();
-    this._updateButtonState(); // Update button if needed (e.g. if it displays track info)
-    this._updateTrackInfo(); // Update track info on nextTrack
+
+    this.currentTrackIndex = (this.currentTrackIndex + 1) % this.playlist.length;
+    this._switchTrack();
   }
 
-  prevTrack() {
-    if (this.playlist.length === 0) {
-      console.warn("Cannot navigate to previous track: playlist is empty.");
-      return;
+  async prevTrack() {
+    if (this.playlist.length === 0) {return;}
+
+    if (this.isPlaying) {
+        await this._fadeOut(300);
     }
+
     this.currentTrackIndex--;
     if (this.currentTrackIndex < 0) {
       this.currentTrackIndex = this.playlist.length - 1;
     }
+    this._switchTrack();
+  }
+
+  _switchTrack() {
     this.audioElement.src = this.playlist[this.currentTrackIndex].src;
     this.audioElement.load();
-    if (this.isPlaying) {
-      this.play();
-    }
     this.saveState();
-    this._updateButtonState(); // Update button if needed
-    this._updateTrackInfo(); // Update track info on prevTrack
+    this._updateButtonState();
+    this._updateTrackInfo();
+
+    if (this.isPlaying) {
+        this.play(true); // Play with fade-in
+    }
   }
 
   _handleTrackEnd() {
@@ -230,7 +319,6 @@ class AudioManager {
     const iconPause = this.playPauseButton.querySelector('.icon-pause');
     const iconLoading = this.playPauseButton.querySelector('.icon-loading');
 
-    // If waiting, the loading state handles visibility.
     if (!iconLoading.classList.contains('hidden')) {
         if(iconPlay) {iconPlay.classList.add('hidden');}
         if(iconPause) {iconPause.classList.add('hidden');}
@@ -268,19 +356,15 @@ class AudioManager {
   _updateTrackInfo() {
     const trackInfoDiv = document.getElementById('trackInfo');
     if (trackInfoDiv) {
-      // Add fade-out class to trigger animation
       trackInfoDiv.classList.add('fade-out');
-
-      // Wait for the transition to finish (e.g., 300ms matches CSS) before updating text
       setTimeout(() => {
-        if (this.playlist.length > 0 && this.playlist[this.currentTrackIndex]) {
+        if (this.playlist.length > 0) {
           trackInfoDiv.textContent = this.playlist[this.currentTrackIndex].title;
         } else {
           trackInfoDiv.textContent = 'No track loaded';
         }
-        // Remove class to fade back in
         trackInfoDiv.classList.remove('fade-out');
-        this._clearError(); // Clear any previous errors on track change
+        this._clearError();
       }, 300);
     }
   }
@@ -291,6 +375,8 @@ class AudioManager {
       statusEl.textContent = message || "Error";
       statusEl.classList.add('error');
     }
+    // Also show toast
+    ToastManager.show(message || "An error occurred", "error");
   }
 
   _clearError() {
@@ -303,7 +389,7 @@ class AudioManager {
 
   saveState() {
     const state = {
-      volume: this.audioElement.volume,
+      volume: this.userVolume, // Save user preference, not necessarily current volume (if fading)
       trackIndex: this.currentTrackIndex
     };
     try {
@@ -319,7 +405,7 @@ class AudioManager {
       if (saved) {
         const state = JSON.parse(saved);
         if (typeof state.volume === 'number' && state.volume >= 0 && state.volume <= 1) {
-          this.savedVolume = state.volume;
+          this.userVolume = state.volume;
         }
         if (typeof state.trackIndex === 'number' && state.trackIndex >= 0 && state.trackIndex < this.playlist.length) {
           this.currentTrackIndex = state.trackIndex;
@@ -331,44 +417,62 @@ class AudioManager {
   }
 }
 
-// Modify the instantiation at the end of the file:
-// DOMContentLoaded ensures the button exists before audioManager tries to access it.
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     const audioManager = new AudioManager('playPauseBtn', 'volumeSlider');
     audioManager.init();
 
-  // Add event listener for the previous button
   const prevBtn = document.getElementById('prevBtn');
-  if (prevBtn) {
-    prevBtn.addEventListener('click', () => audioManager.prevTrack());
-  }
+  if (prevBtn) {prevBtn.addEventListener('click', () => audioManager.prevTrack());}
 
-  // Add event listener for the next button
   const nextBtn = document.getElementById('nextBtn');
-  if (nextBtn) {
-    nextBtn.addEventListener('click', () => audioManager.nextTrack());
+  if (nextBtn) {nextBtn.addEventListener('click', () => audioManager.nextTrack());}
+
+  const openHelpBtn = document.getElementById('openHelpBtn');
+  if (openHelpBtn) {
+      openHelpBtn.addEventListener('click', () => {
+          const modal = document.getElementById('helpModal');
+          if (modal) {modal.classList.remove('hidden');}
+      });
   }
 
-  // Keyboard accessibility
+  const closeHelpBtn = document.querySelector('.close-modal');
+  if (closeHelpBtn) {
+      closeHelpBtn.addEventListener('click', () => {
+          const modal = document.getElementById('helpModal');
+          if (modal) modal.classList.add('hidden');
+      });
+  }
+
   document.addEventListener('keydown', (event) => {
-    // Only handle global keys if not focused on an input (though we have none except volume)
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {return;}
 
     if (event.code === 'Space') {
-      event.preventDefault(); // Prevent scrolling
+      event.preventDefault();
       audioManager.togglePlayPause();
     } else if (event.code === 'ArrowRight') {
       audioManager.nextTrack();
     } else if (event.code === 'ArrowLeft') {
       audioManager.prevTrack();
     }
+    // New: Toggle Help Modal with '?' (Shift + /)
+    else if (event.key === '?') {
+        const modal = document.getElementById('helpModal');
+        if (modal) {
+            modal.classList.toggle('hidden');
+        }
+    }
+    // Escape to close help modal
+    else if (event.code === 'Escape') {
+        const modal = document.getElementById('helpModal');
+        if (modal && !modal.classList.contains('hidden')) {
+            modal.classList.add('hidden');
+        }
+    }
   });
   });
 }
 
-// Export the AudioManager class for Node.js environments (e.g., testing)
-// Check if module and module.exports are defined to maintain browser compatibility
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = AudioManager;
 }
