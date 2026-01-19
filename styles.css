@@ -513,6 +513,30 @@ footer {
   color: var(--c-slate-400);
   letter-spacing: 0.05em;
   opacity: 0.8;
+  z-index: 10;
+  pointer-events: none; /* Let clicks pass, but buttons need events */
+}
+
+footer p {
+  pointer-events: auto;
+}
+
+.text-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 8px;
+    text-decoration: none;
+    border-bottom: 1px dotted currentColor;
+    transition: all 0.2s;
+}
+
+.text-btn:hover {
+    color: var(--c-teal-600);
+    border-bottom-style: solid;
 }
 
 /* --- Mobile Hyper-Optimization --- */
@@ -689,4 +713,134 @@ footer {
 @keyframes slideUp {
   from { transform: translateY(110%); }
   to { transform: translateY(0); }
+}
+
+/* --- Toast Notifications --- */
+#toast-container {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none; /* Let clicks pass through container */
+}
+
+.toast {
+    background: rgba(15, 23, 42, 0.9);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-error {
+    background: rgba(239, 68, 68, 0.9); /* Red */
+}
+
+/* --- Modal System --- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-content {
+    background: var(--glass-surface);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+    padding: 32px;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    transform: scale(1);
+    transition: transform 0.3s var(--ease-elastic);
+    text-align: left;
+}
+
+.modal-overlay.hidden .modal-content {
+    transform: scale(0.9);
+}
+
+.modal-content h3 {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    color: var(--c-slate-800);
+}
+
+.close-modal {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.shortcut-list {
+    list-style: none;
+    margin-top: 20px;
+}
+
+.shortcut-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    font-size: 0.9rem;
+    color: var(--c-slate-600);
+}
+
+.shortcut-list li:last-child {
+    border-bottom: none;
+}
+
+.key {
+    background: rgba(255,255,255,0.8);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.1);
+    color: var(--c-slate-700);
+    min-width: 24px;
+    text-align: center;
 }

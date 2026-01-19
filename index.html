@@ -110,8 +110,22 @@
     </main>
 
     <footer>
-        <p>&copy; 2024 Zen of Japan</p>
+        <p>&copy; 2024 Zen of Japan &bull; <button id="openHelpBtn" class="text-btn">Shortcuts</button></p>
     </footer>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="helpModal" class="modal-overlay hidden" aria-hidden="true">
+        <div class="modal-content glass-panel">
+            <button class="close-modal" aria-label="Close Help">&times;</button>
+            <h3>Keyboard Shortcuts</h3>
+            <ul class="shortcut-list">
+                <li><span class="key">Space</span> <span>Play / Pause</span></li>
+                <li><span class="key">→</span> <span>Next Track</span></li>
+                <li><span class="key">←</span> <span>Previous Track</span></li>
+                <li><span class="key">?</span> <span>Show Help</span></li>
+            </ul>
+        </div>
+    </div>
 
     <script src="audio.js"></script>
     <script>
