@@ -193,8 +193,27 @@ let mockPauseIcon;
 
 function setupMockDOM() {
     // Create persistent mock icon objects
-    mockPlayIcon = { style: { display: 'inline' } }; // Initial state
-    mockPauseIcon = { style: { display: 'none' } };  // Initial state
+    const createMockIcon = (display = 'inline') => {
+        const icon = { style: { display } };
+        icon.classList = {
+            _classes: new Set(display === 'none' ? ['hidden'] : []),
+            add: function(c) {
+                this._classes.add(c);
+                if (c === 'hidden') icon.style.display = 'none';
+            },
+            remove: function(c) {
+                this._classes.delete(c);
+                if (c === 'hidden') icon.style.display = 'inline';
+            },
+            contains: function(c) { return this._classes.has(c); }
+        };
+        return icon;
+    };
+
+    mockPlayIcon = createMockIcon('inline');
+    mockPauseIcon = createMockIcon('none');
+    mockLoadingIcon = createMockIcon('none');
+    mockLoadingIcon.classList.add('hidden');
 
     mockPlayPauseButton = {
         _mockPlayIcon: mockPlayIcon, // Store for reset logic if needed, or access via global scope
@@ -226,6 +245,7 @@ function setupMockDOM() {
             // console.log(`mockPlayPauseButton.querySelector('${selector}')`);
             if (selector === '.icon-play') return mockPlayIcon;
             if (selector === '.icon-pause') return mockPauseIcon;
+            if (selector === '.icon-loading') return mockLoadingIcon;
             return null;
         },
         // _isMockPlaying is used by AudioManager's _updateButtonState via classList.add/remove 'playing'
@@ -253,6 +273,7 @@ function setupMockDOM() {
 
     mockVolumeSlider = {
         value: 0.5, // Default volume
+        style: {},
         addEventListener: (event, callback) => console.log(`mockVolumeSlider.addEventListener('${event}', ...) called`),
         // No dispatchEvent needed for slider for now, unless we test user interaction with it
     };
@@ -293,6 +314,8 @@ if (typeof document !== 'undefined') {
 
 // --- Test Suite Structure ---
 console.log('Starting AudioManager tests...');
+(async function() {
+
 
 // Helper function to reset AudioManager and its mock audio element for each test section
 function resetAudioManagerForTest() {
@@ -357,6 +380,7 @@ function resetAudioManagerForTest() {
     // of MockAudioElement from *outside* the AudioManager, but rather observe AudioManager's behavior.
 
     console.log('AudioManager instance potentially created/re-initialized for test section.');
+    audioManager.init();
     return audioManager;
 }
 
@@ -398,7 +422,7 @@ document.getElementById = (id) => {
 
 // == Initialization Tests ==
 console.log('--- Initialization Tests ---');
-(function() {
+await (async function() {
     const audioManager = resetAudioManagerForTest(); // This will call new AudioManager(...)
     // audioManager.init(); // Call init explicitly if DOMContentLoaded doesn't run or is unreliable in test env
 
@@ -406,7 +430,11 @@ console.log('--- Initialization Tests ---');
     assertTrue(audioManager.audioElement instanceof MockAudioElement, "AudioManager.audioElement should be an instance of MockAudioElement");
     assertEquals(0, audioManager.currentTrackIndex, "Initial track index should be 0");
     assertEquals("assets/audio/zen-garden.mp3", audioManager.audioElement.src, "Initial audio src should be the first playlist item");
-    assertEquals(0.5, audioManager.audioElement.volume, "Initial volume should be 0.5");
+    assertEquals(0.5, audioManager.userVolume, "Initial userVolume should be 0.5");
+    // Verify Web Audio gain matches userVolume
+    if (audioManager.gainNode && audioManager.gainNode.gain) {
+         assertEquals(0.5, audioManager.gainNode.gain.value, "Initial gain node value should be 0.5");
+    }
     assertTrue(audioManager.audioElement.paused, "Audio should be initially paused");
 
     // Test that event listeners are attached by init()
@@ -450,95 +478,115 @@ console.log('--- Initialization Tests ---');
 
 // == Playback Control Tests ==
 console.log('--- Playback Control Tests ---');
-(function() {
+await (async function() {
     const audioManager = resetAudioManagerForTest();
     // audioManager.init(); // Ensure initialized
 
     // Test play() - successful
-    console.log("Test: play() successful");
-    audioManager.play();
-    assertFalse(audioManager.audioElement.paused, "Audio should not be paused after successful play()");
-    assertTrue(audioManager.isPlaying, "AudioManager.isPlaying should be true after successful play()");
-    if (mockPlayPauseButton && mockPlayPauseButton.querySelector) {
-        const playIcon = mockPlayPauseButton.querySelector('.icon-play');
-        const pauseIcon = mockPlayPauseButton.querySelector('.icon-pause');
-        if (playIcon && pauseIcon) {
-            assertEquals('none', playIcon.style.display, "Play icon should be hidden after successful play()");
-            assertEquals('inline', pauseIcon.style.display, "Pause icon should be visible after successful play()");
+    await (async function() {
+        console.log("Test: play() successful");
+        await audioManager.play();
+        assertFalse(audioManager.audioElement.paused, "Audio should not be paused after successful play()");
+        assertTrue(audioManager.isPlaying, "AudioManager.isPlaying should be true after successful play()");
+        if (mockPlayPauseButton && mockPlayPauseButton.querySelector) {
+            const playIcon = mockPlayPauseButton.querySelector('.icon-play');
+            const pauseIcon = mockPlayPauseButton.querySelector('.icon-pause');
+            if (playIcon && pauseIcon) {
+                assertEquals('none', playIcon.style.display, "Play icon should be hidden after successful play()");
+                assertEquals('inline', pauseIcon.style.display, "Pause icon should be visible after successful play()");
+            }
         }
-    }
+    })();
 
     // Test pause()
-    console.log("Test: pause()");
-    audioManager.pause(); // Pauses the current track
-    assertTrue(audioManager.audioElement.paused, "Audio should be paused after pause()");
-    assertFalse(audioManager.isPlaying, "AudioManager.isPlaying should be false after pause()");
-    if (mockPlayPauseButton && mockPlayPauseButton.querySelector) {
-        const playIcon = mockPlayPauseButton.querySelector('.icon-play');
-        const pauseIcon = mockPlayPauseButton.querySelector('.icon-pause');
-        if (playIcon && pauseIcon) {
-            assertEquals('inline', playIcon.style.display, "Play icon should be visible after pause()");
-            assertEquals('none', pauseIcon.style.display, "Pause icon should be hidden after pause()");
+    await (async function() {
+        console.log("Test: pause()");
+        audioManager.pause(); // Pauses the current track
+        assertTrue(audioManager.audioElement.paused, "Audio should be paused after pause()");
+        assertFalse(audioManager.isPlaying, "AudioManager.isPlaying should be false after pause()");
+        if (mockPlayPauseButton && mockPlayPauseButton.querySelector) {
+            const playIcon = mockPlayPauseButton.querySelector('.icon-play');
+            const pauseIcon = mockPlayPauseButton.querySelector('.icon-pause');
+            if (playIcon && pauseIcon) {
+                assertEquals('inline', playIcon.style.display, "Play icon should be visible after pause()");
+                assertEquals('none', pauseIcon.style.display, "Pause icon should be hidden after pause()");
+            }
         }
-    }
+    })();
 
     // Test play() promise rejection
-    console.log("Test: play() promise rejection");
-    MockAudioElement.setPlayPromiseRejection(true, new Error("Simulated Play Failure"));
-    // audioManager.audioElement.constructor.setPlayPromiseRejection(true, new Error("Simulated Play Failure")); // Alternative way to call static method
+    await (async function() {
+        console.log("Test: play() promise rejection");
+        MockAudioElement.setPlayPromiseRejection(true, new Error("Simulated Play Failure"));
 
-    audioManager.play(); // Attempt to play, expecting promise rejection
-    // Note: AudioManager's play().then().catch() should handle isPlaying and _updateButtonState.
-    // We assume synchronous update for these tests for simplicity, as async testing in this environment is complex.
-    assertFalse(audioManager.isPlaying, "AudioManager.isPlaying should be false after play() promise rejection");
-    assertTrue(audioManager.audioElement.paused, "Audio element should be paused after play() promise rejection");
-    if (mockPlayPauseButton && mockPlayPauseButton.querySelector) {
-        const playIcon = mockPlayPauseButton.querySelector('.icon-play');
-        if (playIcon) {
-            assertEquals('inline', playIcon.style.display, "Play icon should be visible after play() promise rejection");
+        try {
+            await audioManager.play();
+        } catch(e) {}
+
+        assertFalse(audioManager.isPlaying, "AudioManager.isPlaying should be false after play() promise rejection");
+        assertTrue(audioManager.audioElement.paused, "Audio element should be paused after play() promise rejection");
+        if (mockPlayPauseButton && mockPlayPauseButton.querySelector) {
+            const playIcon = mockPlayPauseButton.querySelector('.icon-play');
+            if (playIcon) {
+                assertEquals('inline', playIcon.style.display, "Play icon should be visible after play() promise rejection");
+            }
         }
-    }
-    MockAudioElement.setPlayPromiseRejection(false); // Reset for subsequent tests
+        MockAudioElement.setPlayPromiseRejection(false);
+    })();
 
     // Test play() when audioElement.src is initially empty
-    console.log("Test: play() when src is initially empty");
-    const freshAudioManager = resetAudioManagerForTest(); // Get a new manager
-    freshAudioManager.audioElement.src = ''; // Manually clear src
-    // freshAudioManager.audioElement.currentSrc = ''; // currentSrc is read-only, not directly settable for mock. Src is enough.
+    await (async function() {
+        console.log("Test: play() when src is initially empty");
+        const freshAudioManager = resetAudioManagerForTest();
+        freshAudioManager.audioElement.src = '';
 
-    freshAudioManager.play();
-    const expectedSrc = freshAudioManager.playlist[freshAudioManager.currentTrackIndex].src;
-    assertEquals(expectedSrc, freshAudioManager.audioElement.src, "AudioElement.src should be set from playlist if initially empty on play()");
-    assertFalse(freshAudioManager.audioElement.paused, "Audio should play if src was initially empty but then set");
-    assertTrue(freshAudioManager.isPlaying, "AudioManager.isPlaying should be true if src was initially empty but then set and played");
+        await freshAudioManager.play();
+        const expectedSrc = freshAudioManager.playlist[freshAudioManager.currentTrackIndex].src;
+        assertEquals(expectedSrc, freshAudioManager.audioElement.src, "AudioElement.src should be set from playlist if initially empty on play()");
+        assertFalse(freshAudioManager.audioElement.paused, "Audio should play if src was initially empty but then set");
+        assertTrue(freshAudioManager.isPlaying, "AudioManager.isPlaying should be true if src was initially empty but then set and played");
+    })();
 
 
     // Test togglePlayPause() - refined
-    console.log("Test: togglePlayPause() refined");
-    const toggleManager = resetAudioManagerForTest();
-    toggleManager.togglePlayPause(); // Should play
-    assertFalse(toggleManager.audioElement.paused, "Audio should not be paused after first togglePlayPause()");
-    assertTrue(toggleManager.isPlaying, "isPlaying should be TRUE after first toggle (play)");
+    await (async function() {
+        console.log("Test: togglePlayPause() refined");
+        const toggleManager = resetAudioManagerForTest();
+        await toggleManager.togglePlayPause(); // Should play
+        assertFalse(toggleManager.audioElement.paused, "Audio should not be paused after first togglePlayPause()");
+        assertTrue(toggleManager.isPlaying, "isPlaying should be TRUE after first toggle (play)");
 
-    toggleManager.togglePlayPause(); // Should pause
-    assertTrue(toggleManager.audioElement.paused, "Audio should be paused after second togglePlayPause()");
-    assertFalse(toggleManager.isPlaying, "isPlaying should be FALSE after second toggle (pause)");
+        await toggleManager.togglePlayPause(); // Should pause
+        assertTrue(toggleManager.audioElement.paused, "Audio should be paused after second togglePlayPause()");
+        assertFalse(toggleManager.isPlaying, "isPlaying should be FALSE after second toggle (pause)");
+    })();
 
     // Test setVolume()
     console.log("Test: setVolume()");
     audioManager.setVolume(0.75);
-    assertEquals(0.75, audioManager.audioElement.volume, "Volume should be 0.75 after setVolume(0.75)");
+    assertEquals(0.75, audioManager.userVolume, "userVolume should be 0.75 after setVolume(0.75)");
+    if (audioManager.gainNode && audioManager.gainNode.gain) {
+        assertEquals(0.75, audioManager.gainNode.gain.value, "Gain value should be 0.75 after setVolume(0.75)");
+    }
+
     audioManager.setVolume(1.5); // Invalid volume
-    assertEquals(0.75, audioManager.audioElement.volume, "Volume should remain 0.75 after setVolume(1.5) (invalid)");
+    assertEquals(0.75, audioManager.userVolume, "userVolume should remain 0.75 after setVolume(1.5) (invalid)");
+    if (audioManager.gainNode && audioManager.gainNode.gain) {
+        assertEquals(0.75, audioManager.gainNode.gain.value, "Gain value should remain 0.75 after invalid setVolume");
+    }
+
     audioManager.setVolume(-0.5); // Invalid volume
-    assertEquals(0.75, audioManager.audioElement.volume, "Volume should remain 0.75 after setVolume(-0.5) (invalid)");
+    assertEquals(0.75, audioManager.userVolume, "userVolume should remain 0.75 after setVolume(-0.5) (invalid)");
+    if (audioManager.gainNode && audioManager.gainNode.gain) {
+        assertEquals(0.75, audioManager.gainNode.gain.value, "Gain value should remain 0.75 after invalid setVolume");
+    }
 
     console.log('Playback control tests complete.');
 })();
 
 // == Track Navigation Tests ==
 console.log('--- Track Navigation Tests ---');
-(function() {
+await (async function() {
     const audioManager = resetAudioManagerForTest();
     // audioManager.init();
 
@@ -546,20 +594,20 @@ console.log('--- Track Navigation Tests ---');
     const secondTrackSrc = audioManager.playlist[1].src;
 
     // Test nextTrack()
-    audioManager.nextTrack();
+    await audioManager.nextTrack();
     assertEquals(1, audioManager.currentTrackIndex, "Track index should be 1 after nextTrack()");
     assertEquals(secondTrackSrc, audioManager.audioElement.src, "Audio src should be the second track after nextTrack()");
     assertTrue(audioManager.audioElement.paused, "Audio should be paused after nextTrack() if it was paused before");
 
     // Test nextTrack() when playing
-    audioManager.play(); // Start playing the second track
+    await audioManager.play(); // Start playing the second track
     assertFalse(audioManager.audioElement.paused, "Audio should be playing before nextTrack() while playing");
-    audioManager.nextTrack(); // Go to third track
+    await audioManager.nextTrack(); // Go to third track
     assertEquals(2, audioManager.currentTrackIndex, "Track index should be 2 after nextTrack() while playing");
     assertFalse(audioManager.audioElement.paused, "Audio should continue playing on nextTrack() if it was playing before");
 
     // Test nextTrack() looping back to the first track
-    audioManager.nextTrack(); // Should loop back to the first track (index 0)
+    await audioManager.nextTrack(); // Should loop back to the first track (index 0)
     assertEquals(0, audioManager.currentTrackIndex, "Track index should loop back to 0");
     assertEquals(initialTrackSrc, audioManager.audioElement.src, "Audio src should be the first track after looping");
 
@@ -567,10 +615,13 @@ console.log('--- Track Navigation Tests ---');
     console.log("Test: _handleTrackEnd() while playing");
     audioManager.currentTrackIndex = 0; // Reset to first track
     audioManager.audioElement.src = audioManager.playlist[0].src;
-    audioManager.play(); // Ensure playing
+    await audioManager.play(); // Ensure playing
     assertTrue(audioManager.isPlaying, "_handleTrackEnd playing test: isPlaying should be true before track end");
     if (audioManager.audioElement && typeof audioManager.audioElement._simulateTrackEnd === 'function') {
         audioManager.audioElement._simulateTrackEnd(); // This will dispatch 'ended'
+        // _handleTrackEnd calls nextTrack() which is async. We might need to wait for microtask queue.
+        await new Promise(r => setTimeout(r, 0));
+
         assertEquals(1, audioManager.currentTrackIndex, "_handleTrackEnd playing test: Track index should advance");
         assertFalse(audioManager.audioElement.paused, "_handleTrackEnd playing test: Audio should auto-play next track");
         assertTrue(audioManager.isPlaying, "_handleTrackEnd playing test: isPlaying should remain true for next track");
@@ -607,7 +658,7 @@ console.log('--- Track Navigation Tests ---');
 // These tests primarily check if _updateButtonState changes the appearance
 // of the mock play/pause button correctly.
 console.log('--- UI Update Tests ---');
-(function() {
+await (async function() {
     const audioManager = resetAudioManagerForTest();
     // audioManager.init(); // init calls _updateButtonState
 
@@ -619,7 +670,7 @@ console.log('--- UI Update Tests ---');
     assertEquals('none', pauseIcon.style.display, "UI Test: Pause icon should be none when paused (initial)");
 
     // After play()
-    audioManager.play(); // play() calls _updateButtonState via 'play' event
+    await audioManager.play(); // play() calls _updateButtonState via 'play' event
     // Need to re-query selectors if their style objects are replaced (unlikely with current mock)
     playIcon = mockPlayPauseButton.querySelector('.icon-play');
     pauseIcon = mockPlayPauseButton.querySelector('.icon-pause');
@@ -646,10 +697,10 @@ console.log('--- UI Update Tests ---');
 // == Error Handling Tests ==
 console.log('--- Error Handling Tests ---');
 
-(function() {
+await (async function() {
     console.log("Test: 'error' event dispatched while playing");
     const audioManager = resetAudioManagerForTest();
-    audioManager.play(); // Start playing
+    await audioManager.play(); // Start playing
     assertTrue(audioManager.isPlaying, "Error test (playing): isPlaying should be true before error");
     assertFalse(audioManager.audioElement.paused, "Error test (playing): audioElement should not be paused before error");
 
@@ -671,7 +722,7 @@ console.log('--- Error Handling Tests ---');
     }
 })();
 
-(function() {
+await (async function() {
     console.log("Test: 'error' event dispatched while paused");
     const audioManager = resetAudioManagerForTest();
     // Ensure it's paused (default state after resetAudioManagerForTest)
@@ -695,7 +746,7 @@ console.log('--- Error Handling Tests ---');
     }
 })();
 
-(function() {
+await (async function() {
     console.log("Test: audioManager.play() with bad src (leading to error event from mock or promise rejection)");
     const audioManager = resetAudioManagerForTest();
 
@@ -713,7 +764,7 @@ console.log('--- Error Handling Tests ---');
     // Option 2: Rely on MockAudioElement's src='' check in play()
     audioManager.audioElement.src = ''; // This will cause MockAudioElement.play() to reject and dispatch 'error'
 
-    audioManager.play(); // Attempt to play
+    await audioManager.play(); // Attempt to play
 
     // Assertions:
     // isPlaying should be false (handled by play()'s .catch() or the 'error' event handler)
@@ -750,7 +801,7 @@ console.log('AudioManager tests complete.');
 
 // == prevTrack Method Tests ==
 console.log('--- prevTrack Method Tests ---');
-(function() {
+await (async function() {
     let audioManager;
     let playSpy;
 
@@ -769,41 +820,41 @@ console.log('--- prevTrack Method Tests ---');
             callCount: 0,
             fn: audioManager.audioElement.play, // Original function
             mock: function() { // Mock implementation
-                this.called = true;
-                this.callCount++;
+                playSpy.called = true;
+                playSpy.callCount++;
                 // console.log('Mocked play called on audio element');
-                return this.fn.apply(audioManager.audioElement, arguments); // Call original
-            }.bind(this) // Bind this for 'this.called'
+                return playSpy.fn.apply(audioManager.audioElement, arguments); // Call original
+            }
         };
         // Replace the original play method with the mock
         audioManager.audioElement.play = playSpy.mock;
     };
 
     // Test case 1: Changes to the previous track
-    (function() {
+    await (async function() {
         beforeEach();
         console.log("Test: prevTrack() changes to the previous track");
         audioManager.currentTrackIndex = 1; // Start at the second track
         audioManager.audioElement.src = audioManager.playlist[1].src; // Sync src
-        audioManager.prevTrack();
+        await audioManager.prevTrack();
         assertEquals(0, audioManager.currentTrackIndex, "prevTrack() should change currentTrackIndex to 0");
         assertEquals(audioManager.playlist[0].src, audioManager.audioElement.src, "prevTrack() should change audioElement src to the first track");
     })();
 
     // Test case 2: Wraps around from the first to the last track
-    (function() {
+    await (async function() {
         beforeEach();
         console.log("Test: prevTrack() wraps around to the last track");
         audioManager.currentTrackIndex = 0; // Start at the first track
         audioManager.audioElement.src = audioManager.playlist[0].src; // Sync src
-        audioManager.prevTrack();
+        await audioManager.prevTrack();
         const lastTrackIndex = audioManager.playlist.length - 1;
         assertEquals(lastTrackIndex, audioManager.currentTrackIndex, "prevTrack() should wrap around to the last track index");
         assertEquals(audioManager.playlist[lastTrackIndex].src, audioManager.audioElement.src, "prevTrack() should change audioElement src to the last track");
     })();
 
     // Test case 3: Continues playing if music was playing
-    (function() {
+    await (async function() {
         beforeEach();
         console.log("Test: prevTrack() continues playing if music was playing");
         audioManager.currentTrackIndex = 1;
@@ -811,14 +862,14 @@ console.log('--- prevTrack Method Tests ---');
         audioManager.isPlaying = true; // Simulate music was playing
         // audioManager.audioElement.play = jest.fn(); // Using jest.fn if in Jest env
 
-        audioManager.prevTrack();
+        await audioManager.prevTrack();
         assertTrue(playSpy.called, "prevTrack() should call play() on audioElement if isPlaying was true");
         assertEquals(1, playSpy.callCount, "play() should be called once");
         assertTrue(audioManager.isPlaying, "isPlaying should remain true"); // prevTrack calls play which sets isPlaying to true
     })();
 
     // Test case 4: Remains paused if music was paused
-    (function() {
+    await (async function() {
         beforeEach();
         console.log("Test: prevTrack() remains paused if music was paused");
         audioManager.currentTrackIndex = 1;
@@ -826,7 +877,7 @@ console.log('--- prevTrack Method Tests ---');
         audioManager.isPlaying = false; // Simulate music was paused
         // audioManager.audioElement.play = jest.fn();
 
-        audioManager.prevTrack();
+        await audioManager.prevTrack();
         assertFalse(playSpy.called, "prevTrack() should not call play() on audioElement if isPlaying was false");
         assertFalse(audioManager.isPlaying, "isPlaying should remain false");
         assertEquals(audioManager.playlist[0].src, audioManager.audioElement.src, "prevTrack() should still update the src even if paused");
@@ -838,7 +889,7 @@ console.log('--- prevTrack Method Tests ---');
 
 // == Track Information Display Tests ==
 console.log('--- Track Information Display Tests ---');
-(function() {
+await (async function() {
     let audioManager;
     let trackInfoDiv;
 
@@ -861,7 +912,7 @@ console.log('--- Track Information Display Tests ---');
     };
 
     // Test case 1: Displays correct track title after init()
-    (function() {
+    await (async function() {
         beforeEach(); // This calls audioManager.init() via resetAudioManagerForTest()
         console.log("Test: Track info displays correct title after init()");
         const expectedTitle = audioManager.playlist[0].title;
@@ -872,7 +923,7 @@ console.log('--- Track Information Display Tests ---');
     })();
 
     // Test case 2: Updates track title after nextTrack()
-    (function() {
+    await (async function() {
         beforeEach();
         console.log("Test: Track info updates after nextTrack()");
         audioManager.nextTrack();
@@ -883,7 +934,7 @@ console.log('--- Track Information Display Tests ---');
     })();
 
     // Test case 3: Updates track title after prevTrack()
-    (function() {
+    await (async function() {
         beforeEach();
         console.log("Test: Track info updates after prevTrack()");
         audioManager.nextTrack(); // Go to track 1 first
@@ -895,7 +946,7 @@ console.log('--- Track Information Display Tests ---');
     })();
 
     // Test case 4: Handles empty playlist gracefully
-    (function() {
+    await (async function() {
         beforeEach();
         console.log("Test: Track info displays default message for empty playlist");
         audioManager.playlist = [];
@@ -919,4 +970,5 @@ console.log('--- Track Information Display Tests ---');
 
 
     console.log('Track Information Display tests complete.');
+})();
 })();

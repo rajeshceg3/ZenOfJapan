@@ -33,6 +33,18 @@ class ToastManager {
 class AudioManager {
   constructor(playPauseButtonId, volumeSliderId) {
     this.audioElement = new Audio();
+    this.audioElement.crossOrigin = "anonymous"; // Essential for Web Audio API with external assets
+
+    // Web Audio API Initialization
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    this.audioContext = new AudioContext();
+    this.sourceNode = this.audioContext.createMediaElementSource(this.audioElement);
+    this.gainNode = this.audioContext.createGain();
+
+    // Connect nodes: source -> gain -> destination
+    this.sourceNode.connect(this.gainNode);
+    this.gainNode.connect(this.audioContext.destination);
+
     this.currentTrackIndex = 0;
     this.playlist = [
       { title: "Zen Garden", src: "assets/audio/zen-garden.mp3", duration: 180 },
@@ -40,7 +52,7 @@ class AudioManager {
       { title: "Temple Chants", src: "assets/audio/temple-chants.mp3", duration: 200 },
     ];
     this.isPlaying = false;
-    this.userVolume = 0.5; // Track user preference separately from current fading volume
+    this.userVolume = 0.5; // Track user preference
 
     // UI Elements
     this.playPauseButton = document.getElementById(playPauseButtonId);
@@ -72,7 +84,10 @@ class AudioManager {
     this.loadState();
 
     this.audioElement.src = this.playlist[this.currentTrackIndex].src;
-    this.audioElement.volume = this.userVolume;
+    // Set audioElement volume to 1 (max) as we control volume via GainNode
+    this.audioElement.volume = 1;
+    // Set initial gain
+    this.gainNode.gain.value = this.userVolume;
 
     // Event Listeners
     this.audioElement.addEventListener('ended', this._handleTrackEnd);
@@ -141,22 +156,35 @@ class AudioManager {
     }
   }
 
-  // Refactored Play with Retry Logic and Fade In
   async play(withFade = true) {
+    // Resume AudioContext if suspended (browser autoplay policy)
+    if (this.audioContext.state === 'suspended') {
+        try {
+            await this.audioContext.resume();
+        } catch (e) {
+            console.error("Could not resume AudioContext:", e);
+        }
+    }
+
     if (!this.audioElement.src || this.audioElement.currentSrc === "") {
         this.audioElement.src = this.playlist[this.currentTrackIndex].src;
     }
 
     try {
       if (withFade) {
-          this.audioElement.volume = 0; // Start at 0 for fade in
+          // Prepare for fade in: set gain to 0 immediately
+          this.gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
+          this.gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
       } else {
-          this.audioElement.volume = this.userVolume;
+          // Reset gain to user volume if no fade
+           this.gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
+           this.gainNode.gain.setValueAtTime(this.userVolume, this.audioContext.currentTime);
       }
 
       await this._safePlayPromise();
 
       this.isPlaying = true;
+      this._updateButtonState();
       this._clearError();
 
       if (withFade) {
@@ -171,7 +199,6 @@ class AudioManager {
     }
   }
 
-  // Internal Retry Logic
   async _safePlayPromise(retries = 3) {
       for (let i = 0; i < retries; i++) {
           try {
@@ -188,53 +215,59 @@ class AudioManager {
   pause() {
     this.audioElement.pause();
     this.isPlaying = false;
+    // Cancel any ongoing fades
+    this.gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
+    // Note: We don't necessarily reset volume here as resume might want to pick up.
+    // However, play(true) (default) handles fade-in from 0.
   }
 
-  // Crossfade Utilities
+  // Crossfade Utilities using Web Audio API
   _fadeOut(duration = 500) {
       if (this.isFading) {return Promise.resolve();}
       this.isFading = true;
+      const durSeconds = duration / 1000;
+      const currentTime = this.audioContext.currentTime;
+
+      // Cancel any future scheduled values
+      this.gainNode.gain.cancelScheduledValues(currentTime);
+      // Set value at current time to prevent jumps
+      this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, currentTime);
+      // Ramp to 0
+      this.gainNode.gain.linearRampToValueAtTime(0, currentTime + durSeconds);
+
       return new Promise(resolve => {
-          const startVol = this.audioElement.volume;
-          const step = startVol / (duration / 50);
-          const fadeInterval = setInterval(() => {
-              if (this.audioElement.volume - step > 0.01) {
-                  this.audioElement.volume -= step;
-              } else {
-                  this.audioElement.volume = 0;
-                  clearInterval(fadeInterval);
-                  this.isFading = false;
-                  resolve();
-              }
-          }, 50);
+          setTimeout(() => {
+              this.isFading = false;
+              resolve();
+          }, duration);
       });
   }
 
   _fadeIn(targetVol, duration = 500) {
       if (this.isFading) {return Promise.resolve();}
       this.isFading = true;
-      this.audioElement.volume = 0;
+      const durSeconds = duration / 1000;
+      const currentTime = this.audioContext.currentTime;
+
+      this.gainNode.gain.cancelScheduledValues(currentTime);
+      this.gainNode.gain.setValueAtTime(0, currentTime);
+      this.gainNode.gain.linearRampToValueAtTime(targetVol, currentTime + durSeconds);
+
       return new Promise(resolve => {
-          const step = targetVol / (duration / 50);
-          const fadeInterval = setInterval(() => {
-              if (this.audioElement.volume + step < targetVol) {
-                  this.audioElement.volume += step;
-              } else {
-                  this.audioElement.volume = targetVol;
-                  clearInterval(fadeInterval);
-                  this.isFading = false;
-                  resolve();
-              }
-          }, 50);
+          setTimeout(() => {
+              this.isFading = false;
+              resolve();
+          }, duration);
       });
   }
 
   setVolume(level) {
     if (level >= 0 && level <= 1) {
       this.userVolume = parseFloat(level); // Store user preference
-      // Only update element volume if not currently fading to avoid conflict
+      // Only update gain if not currently fading to avoid conflict
       if (!this.isFading) {
-          this.audioElement.volume = this.userVolume;
+          this.gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
+          this.gainNode.gain.setValueAtTime(this.userVolume, this.audioContext.currentTime);
       }
       this._updateSliderVisual(this.volumeSlider, level, 1);
       this.saveState();

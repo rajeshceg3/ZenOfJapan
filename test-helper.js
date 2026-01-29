@@ -46,3 +46,46 @@ if (typeof window !== 'undefined') {
 } else if (typeof global !== 'undefined') {
   global.localStorage = mockLocalStorage;
 }
+
+// --- Mock Web Audio API ---
+class MockAudioParam {
+  constructor(defaultValue = 1) {
+    this.value = defaultValue;
+  }
+  setValueAtTime(value, time) { this.value = value; }
+  linearRampToValueAtTime(value, time) { this.value = value; } // Instant jump for mock
+  cancelScheduledValues(time) {}
+}
+
+class MockGainNode {
+  constructor() {
+    this.gain = new MockAudioParam(1);
+  }
+  connect(destination) {}
+}
+
+class MockAudioContext {
+  constructor() {
+    this.state = 'suspended';
+    this.currentTime = 0;
+    this.destination = {};
+  }
+  createMediaElementSource(elem) {
+    return { connect: (destination) => {} };
+  }
+  createGain() {
+    return new MockGainNode();
+  }
+  resume() {
+    this.state = 'running';
+    return Promise.resolve();
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.AudioContext = window.AudioContext || MockAudioContext;
+  window.webkitAudioContext = window.webkitAudioContext || MockAudioContext;
+} else if (typeof global !== 'undefined') {
+  global.AudioContext = MockAudioContext;
+  global.webkitAudioContext = MockAudioContext;
+}
