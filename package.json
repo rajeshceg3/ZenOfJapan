@@ -4,7 +4,7 @@
   "description": "",
   "main": "audio.js",
   "scripts": {
-    "test": "echo \"Open test-runner.html in your browser to run tests.\"",
+    "test": "node verification/ambience-test.mjs",
     "build": "webpack"
   },
   "repository": {
