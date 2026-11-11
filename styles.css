@@ -849,7 +849,7 @@ footer p {
 @media (prefers-reduced-motion: reduce) {
   .background-ambient { animation: none; }
   .track-icon.playing svg { animation: none; }
-  /* Keep loading perceivable without continuous rotation */
-  .loading-spinner { animation: spin 2.4s linear infinite; }
+  /* The loading glyph remains visible without rotating. */
+  .loading-spinner { animation: none; }
   *, *::before, *::after { transition-duration: 0.01ms !important; }
 }
