@@ -1,14 +1,5 @@
-const CACHE_NAME = 'zen-v1';
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './styles.css',
-  './audio.js',
-  './manifest.json',
-  './assets/audio/zen-garden.mp3',
-  './assets/audio/bamboo-flute.mp3',
-  './assets/audio/temple-chants.mp3'
-];
+const CACHE_NAME = 'zen-ambience-v2';
+const ASSETS_TO_CACHE = ['./', './index.html', './styles.css', './bundle.js', './manifest.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

@@ -18,7 +18,6 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self';">
 
     <!-- Performance: Preload assets -->
-    <link rel="preload" href="assets/audio/zen-garden.mp3" as="audio" type="audio/mpeg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -38,34 +37,32 @@
             <div class="track-icon">
                 <!-- Refined Abstract Zen Icon -->
                 <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 18V5L21 3V16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <circle cx="18" cy="16" r="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 22L8 3M15 22L14 2M6 15L9 14M6 9L9 8M13 7L16 8M13 15L16 16M8 7Q2 2 2 6Q3 9 8 7M14 11Q22 5 22 9Q20 13 14 11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
             <h2 id="trackInfo" class="track-title">Loading...</h2>
-            <div class="track-status">Now Playing</div>
+            <div id="soundStatus" class="track-status" role="status">Sound off</div>
         </section>
 
         <div class="control-panel">
             <!-- Mobile Grab Handle -->
             <div class="sheet-handle"></div>
 
-            <div class="progress-section">
-                <span id="currentTime" class="time-text">0:00</span>
-                <input type="range" id="seekSlider" class="seek-slider" min="0" value="0" step="0.1" aria-label="Seek Track">
-                <span id="totalDuration" class="time-text">0:00</span>
+            <div class="ambience-notes">
+                <p id="placeDetail">A small water channel and leaves in light wind.</p>
+                <p class="synthesis-note">Synthesized ambience, not field recordings. No music or voices.</p>
+                <p id="soundError" role="alert"></p>
             </div>
 
             <div class="controls-row">
-                <button id="prevBtn" class="control-btn secondary-btn" aria-label="Previous Track">
+                <button id="prevBtn" class="control-btn secondary-btn" aria-label="Previous place">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M19 20L9 12L19 4V20Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
                         <path d="M5 19V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
                 </button>
 
-                <button id="playPauseBtn" class="control-btn primary-btn" aria-label="Play Music">
+                <button id="playPauseBtn" class="control-btn primary-btn" aria-label="Play ambience" aria-pressed="false">
                     <span class="icon-play">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M5 3L19 12L5 21V3Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
@@ -91,7 +88,7 @@
                     </span>
                 </button>
 
-                <button id="nextBtn" class="control-btn secondary-btn" aria-label="Next Track">
+                <button id="nextBtn" class="control-btn secondary-btn" aria-label="Next place">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M5 4L15 12L5 20V4Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
                         <path d="M19 5V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -119,25 +116,15 @@
             <button class="close-modal" aria-label="Close Help">&times;</button>
             <h3>Keyboard Shortcuts</h3>
             <ul class="shortcut-list">
-                <li><span class="key">Space</span> <span>Play / Pause</span></li>
-                <li><span class="key">→</span> <span>Next Track</span></li>
-                <li><span class="key">←</span> <span>Previous Track</span></li>
+                <li><span class="key">Space</span> <span>Sound on / off</span></li>
+                <li><span class="key">→</span> <span>Next place</span></li>
+                <li><span class="key">←</span> <span>Previous place</span></li>
                 <li><span class="key">?</span> <span>Show Help</span></li>
             </ul>
         </div>
     </div>
 
-    <script src="audio.js"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(registration => {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          }, err => {
-            console.log('ServiceWorker registration failed: ', err);
-          });
-        });
-      }
-    </script>
+    <script type="module" src="audio.js"></script>
+
 </body>
 </html>

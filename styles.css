@@ -853,3 +853,9 @@ footer p {
   .loading-spinner { animation: none; }
   *, *::before, *::after { transition-duration: 0.01ms !important; }
 }
+
+.ambience-notes { text-align: center; padding: 0 8px; margin-bottom: 18px; }
+.ambience-notes p { font-size: 14px; line-height: 1.5; margin: 6px 0; }
+.synthesis-note { color: #475569; }
+#soundError { color: #a32222; }
+#soundError:empty { display: none; }

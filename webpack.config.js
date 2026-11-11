@@ -10,6 +10,7 @@ module.exports = {
     clean: true, // Clean the output directory before emit
   },
   mode: 'production',
+  module: { rules: [{test: /audio\.js$/, type: 'javascript/auto'}] },
   plugins: [
     new HtmlWebpackPlugin({
       template: './index.html',
@@ -24,6 +25,8 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         { from: 'styles.css', to: 'styles.css' },
+        { from: 'sw.js', to: 'sw.js' },
+        { from: 'manifest.json', to: 'manifest.json' },
         { from: 'assets', to: 'assets' },
       ],
     }),
@@ -35,7 +38,7 @@ module.exports = {
             'RemoveDevScript',
             (data, cb) => {
               // Remove the direct reference to audio.js used in dev
-              data.html = data.html.replace(/<script src="audio.js"><\/script>/g, '');
+              data.html = data.html.replace(/<script(?: type="module")? src="audio.js"><\/script>/g, '');
               cb(null, data);
             }
           );

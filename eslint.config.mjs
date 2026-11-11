@@ -2,11 +2,13 @@ import globals from "globals";
 import js from "@eslint/js";
 
 export default [
+  { ignores: ["dist/**", "legacy/**"] },
   js.configs.recommended,
   {
+    files: ["audio.js", "**/*.mjs"],
     languageOptions: {
       ecmaVersion: "latest",
-      sourceType: "script",
+      sourceType: "module",
       globals: {
         ...globals.browser,
         ...globals.node
