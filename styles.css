@@ -844,3 +844,12 @@ footer p {
     min-width: 24px;
     text-align: center;
 }
+
+/* --- Reduced motion: honor the system setting --- */
+@media (prefers-reduced-motion: reduce) {
+  .background-ambient { animation: none; }
+  .track-icon.playing svg { animation: none; }
+  /* Keep loading perceivable without continuous rotation */
+  .loading-spinner { animation: spin 2.4s linear infinite; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; }
+}
