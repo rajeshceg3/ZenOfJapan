@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const {spawn}=require('node:child_process');
 (async()=>{
- const server=process.env.URL?null:spawn('python3',['-m','http.server','8840','--bind','127.0.0.1'],{cwd:require('node:path').resolve(__dirname,'../dist'),stdio:'ignore'});
+ const server=process.env.URL?null:spawn('python3',['-m','http.server','8840','--bind','127.0.0.1'],{cwd:process.env.ROOT||require('node:path').resolve(__dirname,'../dist'),stdio:'ignore'});
  const browser=await chromium.launch();
  try {
   if(server)await new Promise(r=>setTimeout(r,300));
